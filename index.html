@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CogniPrep — הכנה למבחנים קוגניטיביים</title>
+    <meta name="description" content="חדדו את הכישורים הקוגניטיביים שלכם עם תרגילי סדרות מספרים ומטריצות צורניות דינמיות.">
+    <meta name="theme-color" content="#0a0e27">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #06091a;
+            --bg-secondary: #0d1229;
+            --bg-card: rgba(15, 23, 50, 0.65);
+            --bg-card-hover: rgba(22, 33, 72, 0.75);
+            --bg-cell: rgba(20, 30, 60, 0.5);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
+            --error: #ef4444;
+            --error-glow: rgba(239, 68, 68, 0.25);
+            --border: rgba(148, 163, 184, 0.08);
+            --border-hover: rgba(59, 130, 246, 0.3);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.08);
+            --radius: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --shape-color: #c8d6e5;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { height: 100%; }
+
+        body {
+            font-family: 'Rubik', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            direction: rtl;
+        }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        #app { position: relative; min-height: 100vh; }
+
+        #app::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(59, 130, 246, 0.1), transparent),
+                radial-gradient(ellipse 60% 80% at 85% 75%, rgba(139, 92, 246, 0.1), transparent),
+                radial-gradient(ellipse 70% 50% at 50% 50%, rgba(6, 182, 212, 0.04), transparent);
+            z-index: 0;
+            animation: bgPulse 20s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* ===== SCREENS ===== */
+        .screen { position: relative; z-index: 1; display: none; animation: fadeSlideIn 0.5s ease; }
+        .screen.active { display: block; }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== HOME SCREEN ===== */
+        .home-container {
+            max-width: 720px; margin: 0 auto; padding: 60px 24px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; justify-content: center;
+        }
+
+        .logo { text-align: center; margin-bottom: 56px; }
+
+        .logo-icon {
+            font-size: 4.5rem; margin-bottom: 16px;
+            filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.3));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .logo h1 {
+            font-size: 3.2rem; font-weight: 900; letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 10px; line-height: 1.15;
+        }
+
+        .logo .subtitle { font-size: 1.15rem; color: var(--text-secondary); font-weight: 400; letter-spacing: 0.01em; }
+
+        .menu-cards { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+
+        .menu-card {
+            background: var(--bg-card); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 32px; cursor: pointer; transition: all var(--transition);
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; gap: 22px; text-align: right;
+            color: var(--text-primary); font-family: inherit; font-size: inherit;
+            outline: none; width: 100%;
+        }
+
+        .menu-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.03) 50%, transparent 70%);
+            transform: translateX(-150%); transition: transform 0.7s ease;
+        }
+        .menu-card:hover::before { transform: translateX(150%); }
+
+        .menu-card:hover {
+            transform: translateY(-3px); background: var(--bg-card-hover);
+            border-color: var(--border-hover); box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+        .menu-card:active { transform: translateY(-1px) scale(0.99); }
+
+        .card-icon {
+            font-size: 2.8rem; flex-shrink: 0; width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 16px; background: rgba(59, 130, 246, 0.1);
+        }
+        .menu-card:nth-child(2) .card-icon { background: rgba(139, 92, 246, 0.1); }
+
+        .card-text h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; }
+        .card-text p { font-size: 0.92rem; color: var(--text-secondary); font-weight: 400; }
+
+        .card-arrow {
+            margin-right: auto;
+            margin-left: 0;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .menu-card:hover .card-arrow { color: var(--accent-blue); transform: translateX(-4px); }
+
+        /* ===== QUIZ SCREEN ===== */
+        .quiz-container {
+            max-width: 800px; margin: 0 auto; padding: 24px;
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+
+        .quiz-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 28px; gap: 12px; flex-wrap: wrap; }
+
+        .back-btn {
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); color: var(--text-secondary);
+            padding: 10px 18px; border-radius: var(--radius-sm); cursor: pointer;
+            font-family: inherit; font-size: 0.9rem; font-weight: 500;
+            transition: all var(--transition); white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .back-btn:hover { color: var(--text-primary); border-color: var(--border-hover); background: var(--bg-card-hover); transform: translateX(2px); }
+
+        .quiz-title-group { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: center; }
+        .quiz-header h2 { font-size: 1.25rem; font-weight: 700; text-align: center; white-space: nowrap; }
+
+        .difficulty-badge {
+            font-size: 0.72rem; padding: 3px 12px; border-radius: 20px;
+            font-weight: 700; letter-spacing: 0.02em;
+            background: rgba(16, 185, 129, 0.15); color: var(--success);
+        }
+        .difficulty-badge.medium { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
+        .difficulty-badge.hard { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+
+        .score-display {
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border); padding: 10px 18px;
+            border-radius: var(--radius-sm); font-size: 0.9rem;
+            font-weight: 600; color: var(--accent-cyan); white-space: nowrap;
+            direction: ltr; display: inline-block;
+        }
+
+        /* ===== QUESTION AREA ===== */
+        .quiz-body { flex: 1; display: flex; flex-direction: column; gap: 32px; }
+
+        .question-card {
+            background: var(--bg-card); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 40px 32px; box-shadow: var(--shadow-lg);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .question-card.fade-out { opacity: 0; transform: translateY(-12px); }
+
+        /* ===== SERIES DISPLAY (Always LTR for math clarity) ===== */
+        .series-display {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 6px;
+            direction: ltr; unicode-bidi: isolate;
+        }
+
+        .seq-num { font-size: 2rem; font-weight: 700; color: var(--text-primary); padding: 4px 2px; }
+        .seq-comma { font-size: 1.6rem; color: var(--text-muted); font-weight: 400; margin: 0 2px; }
+        .seq-missing {
+            font-size: 2.2rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.08); }
+        }
+
+        /* ===== MATRIX GRID (LTR standard for Raven matrices) ===== */
+        .matrix-display { display: flex; justify-content: center; }
+
+        .matrix-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+            width: 100%; max-width: 360px; aspect-ratio: 1;
+            background: rgba(100, 116, 139, 0.08); border-radius: var(--radius-md); padding: 4px;
+            direction: ltr;
+        }
+
+        .matrix-cell {
+            background: var(--bg-cell); border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            aspect-ratio: 1; padding: 10px; transition: all var(--transition);
+        }
+        .matrix-cell svg { width: 100%; height: 100%; }
+
+        .matrix-cell.missing {
+            background: rgba(59, 130, 246, 0.08);
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+        }
+        .matrix-cell.missing svg text { animation: pulse 2s ease-in-out infinite; }
+
+        /* ===== ANSWERS ===== */
+        .answers-label { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; text-align: right; }
+
+        .answers-grid { display: grid; gap: 12px; }
+        .answers-grid.series-answers { grid-template-columns: repeat(5, 1fr); }
+        .answers-grid.matrix-answers { grid-template-columns: repeat(5, 1fr); }
+
+        .answer-btn {
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 2px solid var(--border); border-radius: var(--radius-md);
+            padding: 16px 12px; cursor: pointer; transition: all var(--transition);
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            color: var(--text-primary); font-family: inherit; position: relative; overflow: hidden;
+        }
+
+        .answer-btn:not(.disabled):hover {
+            border-color: var(--border-hover); background: var(--bg-card-hover);
+            transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .answer-btn:not(.disabled):active { transform: translateY(0) scale(0.98); }
+
+        .answer-index {
+            font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: rgba(100, 116, 139, 0.15); flex-shrink: 0;
+        }
+
+        .answer-value { font-size: 1.35rem; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+        .answer-svg { width: 60px; height: 60px; }
+        .answer-svg svg { width: 100%; height: 100%; }
+
+        .answer-btn.correct { border-color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: 0 0 30px var(--success-glow) !important; animation: correctPop 0.4s ease; }
+        @keyframes correctPop { 0% { transform: scale(1); } 30% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .answer-btn.wrong { border-color: var(--error) !important; background: rgba(239, 68, 68, 0.1) !important; box-shadow: 0 0 20px var(--error-glow) !important; animation: shake 0.4s ease; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+
+        .answer-btn.disabled { cursor: default; opacity: 0.5; pointer-events: none; }
+        .answer-btn.correct .answer-index, .answer-btn.correct .answer-value { color: var(--success); }
+        .answer-btn.wrong .answer-index, .answer-btn.wrong .answer-value { color: var(--error); }
+
+        /* ===== FEEDBACK ===== */
+        .feedback-bar {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            gap: 6px; padding: 16px 24px; border-radius: var(--radius-md); font-size: 1rem;
+            animation: fadeSlideIn 0.35s ease; margin-top: 8px; text-align: center;
+        }
+        .feedback-bar.show { display: flex; }
+        .feedback-bar.correct { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--success); }
+        .feedback-bar.wrong { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--error); }
+        .feedback-main { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+        .feedback-icon { font-size: 1.3rem; }
+        .feedback-explanation { font-size: 0.92rem; font-weight: 500; color: var(--text-secondary); line-height: 1.5; }
+
+        /* ===== NEXT BUTTON ===== */
+        .quiz-footer { padding: 20px 0 32px; display: flex; justify-content: center; }
+
+        .next-btn {
+            display: none;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white; border: none; padding: 14px 36px; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+        .next-btn.show { display: inline-flex; align-items: center; gap: 8px; animation: fadeSlideIn 0.4s ease; }
+        .next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4); }
+        .next-btn:active { transform: translateY(0) scale(0.98); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            .logo h1 { font-size: 2.4rem; }
+            .logo .subtitle { font-size: 1rem; }
+            .menu-card { padding: 24px 20px; gap: 16px; }
+            .card-icon { font-size: 2.2rem; width: 52px; height: 52px; border-radius: 12px; }
+            .card-text h2 { font-size: 1.15rem; }
+            .quiz-header h2 { font-size: 1.05rem; }
+            .seq-num { font-size: 1.4rem; }
+            .seq-missing { font-size: 1.6rem; }
+            .question-card { padding: 28px 20px; }
+            .matrix-grid { max-width: 280px; }
+            .answers-grid.matrix-answers { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+            .answers-grid.series-answers { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+            .answer-svg { width: 46px; height: 46px; }
+            .answer-value { font-size: 1.1rem; }
+            .back-btn, .score-display { padding: 8px 12px; font-size: 0.8rem; }
+        }
+
+        @media (max-width: 420px) {
+            .answers-grid.matrix-answers, .answers-grid.series-answers { grid-template-columns: repeat(3, 1fr); }
+            .seq-num { font-size: 1.15rem; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.5); }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- ===== HOME SCREEN ===== -->
+    <div id="home-screen" class="screen active">
+        <div class="home-container">
+            <div class="logo">
+                <div class="logo-icon">🧠</div>
+                <h1>CogniPrep</h1>
+                <p class="subtitle">חדדו את המחשבה. הצליחו במבחן.</p>
+            </div>
+            <div class="menu-cards">
+                <button class="menu-card" id="btn-series" onclick="App.startQuiz('series')">
+                    <div class="card-icon">🔢</div>
+                    <div class="card-text">
+                        <h2>מבחן סדרות</h2>
+                        <p>סדרות מספרים וחשיבה כמותית</p>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </button>
+                <button class="menu-card" id="btn-matrices" onclick="App.startQuiz('matrices')">
+                    <div class="card-icon">🔷</div>
+                    <div class="card-text">
+                        <h2>מבחן מטריצות</h2>
+                        <p>תבניות צורניות והיגיון מרחבי</p>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== QUIZ SCREEN ===== -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-container">
+            <div class="quiz-header">
+                <button class="back-btn" id="back-btn" onclick="App.goHome()">→ חזרה</button>
+                <div class="quiz-title-group">
+                    <h2 id="quiz-title">מבחן סדרות</h2>
+                    <span class="difficulty-badge" id="difficulty-badge">קל</span>
+                </div>
+                <div class="score-display" id="score-display">0 / 0</div>
+            </div>
+            <div class="quiz-body">
+                <div class="question-card" id="question-card">
+                    <div id="question-area"></div>
+                </div>
+                <div id="answers-section">
+                    <div class="answers-label">בחרו את התשובה הנכונה:</div>
+                    <div class="answers-grid" id="answers-area"></div>
+                </div>
+                <div class="feedback-bar" id="feedback-bar">
+                    <div class="feedback-main">
+                        <span class="feedback-icon" id="feedback-icon"></span>
+                        <span id="feedback-text"></span>
+                    </div>
+                    <div class="feedback-explanation" id="feedback-explanation"></div>
+                </div>
+            </div>
+            <div class="quiz-footer">
+                <button class="next-btn" id="next-btn" onclick="App.nextQuestion()">שאלה הבאה <span>←</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  UTILITIES
+// ============================================================
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+}
+
+// ============================================================
+//  COMPOUND ELEMENTS (for Union / Subtraction / XOR patterns)
+// ============================================================
+const COMPOUND_ELEMENTS = {
+    'hline':     (c, sw) => `<line x1="15" y1="50" x2="85" y2="50" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`,
+    'vline':     (c, sw) => `<line x1="50" y1="15" x2="50" y2="85" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`,
+    'fdiag':     (c, sw) => `<line x1="20" y1="80" x2="80" y2="20" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`,
+    'bdiag':     (c, sw) => `<line x1="20" y1="20" x2="80" y2="80" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`,
+    'sm_circle': (c, sw) => `<circle cx="50" cy="50" r="16" fill="none" stroke="${c}" stroke-width="${sw}"/>`,
+    'dot':       (c, sw) => `<circle cx="50" cy="50" r="7" fill="${c}"/>`,
+    'sm_square': (c, sw) => `<rect x="33" y="33" width="34" height="34" fill="none" stroke="${c}" stroke-width="${sw}"/>`,
+    'sm_tri':    (c, sw) => `<polygon points="50,28 72,72 28,72" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"/>`,
+    'arc_top':   (c, sw) => `<path d="M 22 55 Q 50 18 78 55" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`,
+    'arc_bot':   (c, sw) => `<path d="M 22 45 Q 50 82 78 45" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`,
+};
+const COMPOUND_KEYS = Object.keys(COMPOUND_ELEMENTS);
+
+// ============================================================
+//  SERIES GENERATOR
+// ============================================================
+const Series = {
+    generate(difficulty) {
+        const tier = difficulty || 'easy';
+        const easy = [this.arithmetic, this.geometric, this.alternatingAdd, this.squares, this.fibonacci];
+        const medium = [...easy, this.increasingDiff, this.decreasingArithmetic, this.compositeOps, this.offsetFibonacci];
+        const hard = [...medium, this.multiTiered, this.interleaved];
+        const pool = tier === 'hard' ? hard : tier === 'medium' ? medium : easy;
+
+        let result = null, attempts = 0;
+        while (!result && attempts < 40) {
+            attempts++;
+            try {
+                const item = randChoice(pool).call(this);
+                if (item && item.seq && this.validate(item.seq)) result = item;
+                else if (Array.isArray(item) && this.validate(item)) result = { seq: item, explanation: '' };
+            } catch (e) { result = null; }
+        }
+        if (!result) result = this.arithmetic();
+
+        const seq = result.seq;
+        const visibleCount = seq.length - 1;
+        const visible = seq.slice(0, visibleCount);
+        const answer = seq[visibleCount];
+        const distractors = this.generateDistractors(answer, seq);
+        const options = shuffle([answer, ...distractors]);
+        return { visible, answer, options, correctIndex: options.indexOf(answer), explanation: result.explanation };
+    },
+
+    validate(seq) {
+        return seq.length >= 7 && seq.every(n => Number.isInteger(n) && n > 0 && n < 100000) &&
+               new Set(seq.slice(0, 6)).size >= 3;
+    },
+
+    // --- EASY PATTERNS ---
+
+    arithmetic() {
+        const d = randInt(2, 15), start = randInt(1, 30);
+        return {
+            seq: Array.from({ length: 7 }, (_, i) => start + d * i),
+            explanation: `כלל: סדרה חשבונית — הוספת ${d} בכל שלב (+${d})`
+        };
+    },
+
+    geometric() {
+        const r = randChoice([2, 3, 4, 5]), start = randChoice([1, 2, 3, 4, 5]);
+        const seq = [start];
+        for (let i = 1; i < 7; i++) seq.push(seq[i - 1] * r);
+        return seq[6] < 80000 ? {
+            seq,
+            explanation: `כלל: סדרה הנדסית — הכפלה ב-${r} בכל שלב (×${r})`
+        } : null;
+    },
+
+    alternatingAdd() {
+        const d1 = randInt(1, 8); let d2 = randInt(1, 8);
+        while (d2 === d1) d2 = randInt(1, 8);
+        const start = randInt(1, 20), seq = [start];
+        for (let i = 1; i < 7; i++) seq.push(seq[i - 1] + (i % 2 === 1 ? d1 : d2));
+        return {
+            seq,
+            explanation: `כלל: חיבור לסירוגין — הוספת +${d1} ו-+${d2} לסירוגין`
+        };
+    },
+
+    squares() {
+        const off = randInt(1, 8);
+        return {
+            seq: Array.from({ length: 7 }, (_, i) => (off + i) ** 2),
+            explanation: `כלל: סדרת ריבועים עוקבים — (${off}², ${off + 1}², ${off + 2}²...)`
+        };
+    },
+
+    fibonacci() {
+        const a = randInt(1, 6), b = randInt(1, 6), seq = [a, b];
+        for (let i = 2; i < 7; i++) seq.push(seq[i - 1] + seq[i - 2]);
+        return {
+            seq,
+            explanation: 'כלל: סדרת פיבונאצ\'י — כל איבר הוא סכום שני המספרים הקודמים לו'
+        };
+    },
+
+    // --- MEDIUM PATTERNS ---
+
+    increasingDiff() {
+        const start = randInt(1, 10), base = randInt(1, 4), seq = [start];
+        for (let i = 1; i < 7; i++) seq.push(seq[i - 1] + base * i);
+        return {
+            seq,
+            explanation: `כלל: הפרשים עולים — ההפרש גדל בהדרגה (+${base}, +${base * 2}, +${base * 3}...)`
+        };
+    },
+
+    decreasingArithmetic() {
+        const d = randInt(2, 9), start = d * 8 + randInt(5, 20);
+        const seq = Array.from({ length: 7 }, (_, i) => start - d * i);
+        return seq[6] > 0 ? {
+            seq,
+            explanation: `כלל: סדרה חשבונית יורדת — חיסור ${d} בכל שלב (-${d})`
+        } : null;
+    },
+
+    compositeOps() {
+        const m = randChoice([2, 3]), a = randChoice([1, -1, 2, -2, 3, 5]);
+        const start = randInt(1, 6), seq = [start];
+        for (let i = 1; i < 7; i++) seq.push(seq[i - 1] * m + a);
+        return seq.every(n => n > 0 && n < 80000) ? {
+            seq,
+            explanation: `כלל: פעולה משולבת — כפל ב-${m} ולאחר מכן ${a >= 0 ? '+' : ''}${a}`
+        } : null;
+    },
+
+    offsetFibonacci() {
+        const d = randInt(2, 5), start = randInt(1, 5);
+        const seq = [start, start + d, start + 2 * d];
+        for (let i = 3; i < 7; i++) seq.push(seq[i - 1] + seq[i - 2]);
+        return seq.every(n => n > 0 && n < 100000) ? {
+            seq,
+            explanation: 'כלל: פיבונאצ\'י מוזז — התחלה חשבונית ולאחריה סכום שני המספרים הקודמים'
+        } : null;
+    },
+
+    // --- HARD PATTERNS ---
+
+    multiTiered() {
+        const d2 = randChoice([1, 2, 3]);
+        const d1Start = randInt(1, 5), start = randInt(1, 10);
+        const diffs1 = [d1Start];
+        for (let i = 1; i < 6; i++) diffs1.push(diffs1[i - 1] + d2);
+        const seq = [start];
+        for (let i = 0; i < 6; i++) seq.push(seq[i] + diffs1[i]);
+        return seq.every(n => n > 0 && n < 100000) ? {
+            seq,
+            explanation: `כלל: הפרשים רב-שלביים — הפרשי הדרגה השנייה קבועים (+${d2})`
+        } : null;
+    },
+
+    interleaved() {
+        const dA = randInt(2, 8), startA = randInt(1, 15);
+        let dB = randInt(2, 8); while (dB === dA) dB = randInt(2, 8);
+        let startB = randInt(1, 20); while (startB === startA) startB = randInt(1, 20);
+        const serA = Array.from({ length: 5 }, (_, i) => startA + dA * i);
+        const serB = Array.from({ length: 4 }, (_, i) => startB + dB * i);
+        const seq = [];
+        for (let i = 0; i < 4; i++) { seq.push(serA[i]); seq.push(serB[i]); }
+        seq.push(serA[4]);
+        return seq.every(n => n > 0 && n < 100000) ? {
+            seq,
+            explanation: `כלל: סדרות משולבות — שתי סדרות נפרדות שזורות זו בזו (+${dA} ו-+${dB})`
+        } : null;
+    },
+
+    // --- DISTRACTOR GENERATION ---
+
+    generateDistractors(correct, sequence) {
+        const dSet = new Set();
+        const lastDiff = sequence[sequence.length - 2] - sequence[sequence.length - 3];
+        dSet.add(correct + randInt(1, 6));
+        dSet.add(correct - randInt(1, 6));
+        dSet.add(sequence[sequence.length - 2] + lastDiff + randChoice([-3, -2, -1, 1, 2, 3]));
+        dSet.add(sequence[sequence.length - 2] + lastDiff * 2);
+        dSet.add(sequence[randInt(2, sequence.length - 2)]);
+        if (correct > 10) dSet.add(Math.round(correct / 2));
+        dSet.add(correct * 2);
+        dSet.add(correct + lastDiff);
+
+        dSet.delete(correct);
+        const seqSet = new Set(sequence);
+        let arr = [...dSet].filter(n => n > 0 && Number.isInteger(n) && !seqSet.has(n));
+        arr = [...new Set(arr)];
+        arr = shuffle(arr);
+
+        while (arr.length < 4) {
+            const v = correct + randInt(-25, 25);
+            if (v > 0 && v !== correct && !arr.includes(v) && !seqSet.has(v)) arr.push(v);
+        }
+        return arr.slice(0, 4);
+    }
+};
+
+// ============================================================
+//  SVG SHAPE RENDERER
+// ============================================================
+const SVGShapes = {
+    DEFAULT_COLOR: '#c8d6e5',
+    COLORS: ['#c8d6e5', '#ff6b6b', '#2ecc71', '#f1c40f', '#3498db'],
+
+    render(config) {
+        if (!config) return this.questionMark();
+        if (config.type === 'compound') return this.renderCompound(config);
+
+        const c = config.color || this.DEFAULT_COLOR;
+        const sw = 2.5;
+        const sizeM = { small: 0.55, medium: 0.8, large: 1.0 }[config.size || 'medium'];
+        const ls = config.lineStyle || 'solid';
+        const dash = ls === 'dashed' ? ' stroke-dasharray="8 4"' : ls === 'dotted' ? ' stroke-dasharray="3 3"' : '';
+        let inner = '';
+
+        if (config.hasBox) {
+            inner += `<rect x="6" y="6" width="88" height="88" fill="none" stroke="${c}" stroke-width="2" rx="3"/>`;
+        }
+
+        let shapeContent = '';
+        shapeContent += this.drawShape(config.shape, config.fill, 50, 50, sizeM, c, sw, dash);
+
+        if (config.fill === 'decorated') {
+            shapeContent += this.drawDecoration(config.shape, 50, 50, sizeM, c);
+        }
+
+        if (config.lineCount > 0) {
+            shapeContent += this.drawInternalLines(config.shape, 50, 50, sizeM, config.lineCount, c, sw * 0.7);
+        }
+
+        if (config.dotCount > 0) {
+            shapeContent += this.drawDots(50, 50, sizeM, config.dotCount, c);
+        }
+
+        if (config.marker) {
+            const r = 28 * sizeM;
+            shapeContent += `<circle cx="50" cy="${50 - r - 7}" r="4.5" fill="${c}"/>`;
+        }
+
+        if (config.rotation) {
+            shapeContent = `<g transform="rotate(${config.rotation}, 50, 50)">${shapeContent}</g>`;
+        }
+
+        inner += shapeContent;
+        return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+    },
+
+    drawShape(shape, fill, cx, cy, s, c, sw, dash) {
+        const fillC = fill === 'filled' ? c : 'none';
+        const d = dash || '';
+        switch (shape) {
+            case 'circle': {
+                const r = 28 * s;
+                return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fillC}" stroke="${c}" stroke-width="${sw}"${d}/>`;
+            }
+            case 'square': {
+                const h = 27 * s;
+                return `<rect x="${cx - h}" y="${cy - h}" width="${h * 2}" height="${h * 2}" fill="${fillC}" stroke="${c}" stroke-width="${sw}"${d}/>`;
+            }
+            case 'diamond': {
+                const r = 30 * s;
+                return `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}" fill="${fillC}" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"${d}/>`;
+            }
+            case 'cross': {
+                const a = 30 * s, t = 11 * s;
+                const pts = [
+                    `${cx - t},${cy - a}`, `${cx + t},${cy - a}`, `${cx + t},${cy - t}`,
+                    `${cx + a},${cy - t}`, `${cx + a},${cy + t}`, `${cx + t},${cy + t}`,
+                    `${cx + t},${cy + a}`, `${cx - t},${cy + a}`, `${cx - t},${cy + t}`,
+                    `${cx - a},${cy + t}`, `${cx - a},${cy - t}`, `${cx - t},${cy - t}`,
+                ].join(' ');
+                return `<polygon points="${pts}" fill="${fillC}" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"${d}/>`;
+            }
+            case 'triangle': {
+                const r = 30 * s;
+                return `<polygon points="${cx},${cy - r} ${cx + r * 1.05},${cy + r * 0.75} ${cx - r * 1.05},${cy + r * 0.75}" fill="${fillC}" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"${d}/>`;
+            }
+            case 'hexagon': {
+                const r = 28 * s;
+                const pts = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i - Math.PI / 6;
+                    pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+                }
+                return `<polygon points="${pts.join(' ')}" fill="${fillC}" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"${d}/>`;
+            }
+            default: return '';
+        }
+    },
+
+    drawDecoration(shape, cx, cy, s, c) {
+        const sw = 1.8, r = 28 * s;
+        switch (shape) {
+            case 'circle': {
+                const len = r * 0.7;
+                return `<line x1="${cx}" y1="${cy - len}" x2="${cx}" y2="${cy + len}" stroke="${c}" stroke-width="${sw}"/>` +
+                       `<line x1="${cx - len}" y1="${cy}" x2="${cx + len}" y2="${cy}" stroke="${c}" stroke-width="${sw}"/>`;
+            }
+            case 'square': {
+                const h = 27 * s;
+                return `<line x1="${cx}" y1="${cy - h}" x2="${cx}" y2="${cy + h}" stroke="${c}" stroke-width="${sw}"/>` +
+                       `<line x1="${cx - h}" y1="${cy}" x2="${cx + h}" y2="${cy}" stroke="${c}" stroke-width="${sw}"/>`;
+            }
+            case 'diamond': {
+                const ri = 30 * s * 0.5;
+                return `<line x1="${cx - ri}" y1="${cy - ri}" x2="${cx + ri}" y2="${cy + ri}" stroke="${c}" stroke-width="${sw}"/>` +
+                       `<line x1="${cx + ri}" y1="${cy - ri}" x2="${cx - ri}" y2="${cy + ri}" stroke="${c}" stroke-width="${sw}"/>`;
+            }
+            case 'cross': return `<circle cx="${cx}" cy="${cy}" r="${4 * s}" fill="${c}"/>`;
+            case 'triangle': {
+                const r2 = 30 * s * 0.45, yOff = 4 * s;
+                return `<polygon points="${cx},${cy - r2 + yOff} ${cx + r2 * 0.95},${cy + r2 * 0.65 + yOff} ${cx - r2 * 0.95},${cy + r2 * 0.65 + yOff}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+            }
+            case 'hexagon': {
+                const ri = 28 * s * 0.5, pts = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i - Math.PI / 6;
+                    pts.push(`${cx + ri * Math.cos(angle)},${cy + ri * Math.sin(angle)}`);
+                }
+                return `<polygon points="${pts.join(' ')}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+            }
+            default: return '';
+        }
+    },
+
+    drawInternalLines(shape, cx, cy, s, count, c, sw) {
+        const r = 28 * s * 0.72;
+        let out = '';
+        if (count >= 1) out += `<line x1="${cx - r}" y1="${cy}" x2="${cx + r}" y2="${cy}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+        if (count >= 2) out += `<line x1="${cx}" y1="${cy - r}" x2="${cx}" y2="${cy + r}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+        if (count >= 3) out += `<line x1="${cx - r * 0.71}" y1="${cy - r * 0.71}" x2="${cx + r * 0.71}" y2="${cy + r * 0.71}" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>`;
+        return out;
+    },
+
+    drawDots(cx, cy, s, count, c) {
+        const r = 4.2 * s;
+        const off = 13 * s;
+        const positions = {
+            1: [[cx, cy]],
+            2: [[cx - off, cy], [cx + off, cy]],
+            3: [[cx - off, cy], [cx, cy], [cx + off, cy]],
+            4: [[cx - off, cy - off], [cx + off, cy - off], [cx - off, cy + off], [cx + off, cy + off]],
+            5: [[cx - off, cy - off], [cx + off, cy - off], [cx, cy], [cx - off, cy + off], [cx + off, cy + off]],
+            6: [[cx - off, cy - off * 1.1], [cx - off, cy], [cx - off, cy + off * 1.1],
+                [cx + off, cy - off * 1.1], [cx + off, cy], [cx + off, cy + off * 1.1]]
+        };
+        const pts = positions[count] || [[cx, cy]];
+        return pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
+    },
+
+    renderCompound(config) {
+        const c = config.color || this.DEFAULT_COLOR;
+        const sw = 2.5;
+        let svg = '';
+        for (const el of config.elements) {
+            if (COMPOUND_ELEMENTS[el]) svg += COMPOUND_ELEMENTS[el](c, sw);
+        }
+        return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+    },
+
+    questionMark() {
+        return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <text x="50" y="64" text-anchor="middle" font-size="52" font-weight="800"
+                  fill="#3b82f6" font-family="'Rubik', sans-serif" opacity="0.7">?</text></svg>`;
+    },
+};
+
+// ============================================================
+//  MATRIX GENERATOR
+// ============================================================
+const Matrices = {
+    ALL_SHAPES: ['circle', 'square', 'diamond', 'cross', 'triangle', 'hexagon'],
+    ALL_FILLS: ['outline', 'decorated', 'filled'],
+    ALL_SIZES: ['small', 'medium', 'large'],
+
+    generate(difficulty) {
+        const tier = difficulty || 'easy';
+        const easy = [this.shapeFillPattern, this.fillShapePattern, this.sizePattern, this.boxedPattern];
+        const medium = [...easy, this.rotationPattern, this.additionPattern, this.deletionPattern, this.transformationPattern, this.colorPattern, this.arithmeticPattern];
+        const hard = [...medium, this.unionPattern, this.subtractionPattern, this.xorPattern, this.combinedPattern];
+        const pool = tier === 'hard' ? hard : tier === 'medium' ? medium : easy;
+
+        let result = null, attempts = 0;
+        while (!result && attempts < 25) {
+            attempts++;
+            try { result = randChoice(pool).call(this); } catch (e) { result = null; }
+        }
+        return result || this.shapeFillPattern();
+    },
+
+    pickShapes(n) { return shuffle(this.ALL_SHAPES).slice(0, n); },
+
+    // --- Universal key & build ---
+    configKey(o) {
+        if (!o) return 'null';
+        if (o.type === 'compound') return 'C:' + [...o.elements].sort().join(',');
+        return [o.shape || '', o.fill || '', o.size || 'medium', o.hasBox ? 'B' : '',
+                o.rotation || 0, o.lineCount || 0, o.dotCount || 0, o.color || '', o.lineStyle || 'solid',
+                o.marker ? 'M' : ''].join('|');
+    },
+
+    buildResult(grid, answer, distractors, explanation) {
+        const ak = this.configKey(answer), seen = new Set([ak]), unique = [];
+        for (const d of distractors) {
+            const k = this.configKey(d);
+            if (!seen.has(k)) { seen.add(k); unique.push(d); }
+        }
+        let fbAttempts = 0;
+        while (unique.length < 4 && fbAttempts < 30) {
+            fbAttempts++;
+            const fb = { ...answer };
+            if (fb.type === 'compound') {
+                const pool = shuffle([...COMPOUND_KEYS]);
+                fb.elements = pool.slice(0, randInt(1, 4));
+            } else {
+                fb.shape = randChoice(this.ALL_SHAPES);
+                fb.fill = randChoice(this.ALL_FILLS);
+                if (fb.dotCount !== undefined) fb.dotCount = randInt(1, 6);
+                if (fb.rotation !== undefined) fb.rotation = randChoice([0, 90, 180, 270]);
+            }
+            const k = this.configKey(fb);
+            if (!seen.has(k)) { seen.add(k); unique.push(fb); }
+        }
+        const options = shuffle([answer, ...unique.slice(0, 4)]);
+        const answerKey = this.configKey(answer);
+        const correctIndex = options.findIndex(o => this.configKey(o) === answerKey);
+        return { grid, answer, options, correctIndex, explanation };
+    },
+
+    // ============ EASY PATTERNS ============
+
+    shapeFillPattern() {
+        const shapes = this.pickShapes(3), fills = ['outline', 'decorated', 'filled'];
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) row.push({ shape: shapes[r], fill: fills[c], size: 'medium', hasBox: false });
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherF = fills.filter(f => f !== answer.fill);
+        const dist = [
+            { ...answer, fill: otherF[0] }, { ...answer, fill: otherF[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], fill: otherF[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: שורות בעלות אותה צורה, עמודות מתקדמות בסוג המילוי (קו מתאר ← מעוטר ← מלא)');
+    },
+
+    fillShapePattern() {
+        const shapes = this.pickShapes(3), fills = ['outline', 'decorated', 'filled'];
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) row.push({ shape: shapes[c], fill: fills[r], size: 'medium', hasBox: false });
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherF = fills.filter(f => f !== answer.fill);
+        const dist = [
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1] },
+            { ...answer, fill: otherF[0] }, { ...answer, shape: otherS[0], fill: otherF[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: שורות בעלות אותו סוג מילוי, עמודות מחליפות סוגי צורות');
+    },
+
+    boxedPattern() {
+        const shapes = this.pickShapes(3), fills = ['outline', 'decorated', 'filled'];
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) row.push({ shape: shapes[r], fill: fills[c], size: 'medium', hasBox: true });
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherF = fills.filter(f => f !== answer.fill);
+        const dist = [
+            { ...answer, fill: otherF[0] }, { ...answer, fill: otherF[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], fill: otherF[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: צורות ממוסגרות עם התקדמות מילוי לאורך העמודות');
+    },
+
+    sizePattern() {
+        const shapes = this.pickShapes(3), sizes = ['small', 'medium', 'large'];
+        const fillType = randChoice(['outline', 'filled']);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) row.push({ shape: shapes[r], fill: fillType, size: sizes[c], hasBox: false });
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherSz = sizes.filter(s => s !== answer.size);
+        const dist = [
+            { ...answer, size: otherSz[0] }, { ...answer, size: otherSz[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], size: otherSz[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: שורות בעלות אותה צורה, עמודות משנות גודל (קטן ← בינוני ← גדול)');
+    },
+
+    // ============ MEDIUM PATTERNS ============
+
+    rotationPattern() {
+        const shapes = this.pickShapes(3), rotations = [0, 90, 180];
+        const fillType = randChoice(['outline', 'filled']);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) {
+                row.push({ shape: shapes[r], fill: fillType, size: 'medium', rotation: rotations[c], marker: true, hasBox: false });
+            }
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherR = [0, 90, 180, 270].filter(r => r !== answer.rotation);
+        const dist = [
+            { ...answer, rotation: otherR[0] }, { ...answer, rotation: otherR[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], rotation: otherR[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: סיבוב — הצורות מסתובבות ב-90° עם כיוון השעון לאורך העמודות');
+    },
+
+    additionPattern() { return this._lineCountPattern(true); },
+    deletionPattern() { return this._lineCountPattern(false); },
+
+    _lineCountPattern(ascending) {
+        const shapes = this.pickShapes(3), counts = ascending ? [0, 1, 2] : [2, 1, 0];
+        const fillType = randChoice(['outline', 'filled']);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) {
+                row.push({ shape: shapes[r], fill: fillType, size: 'medium', lineCount: counts[c], hasBox: false });
+            }
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherC = [0, 1, 2, 3].filter(c => c !== answer.lineCount);
+        const dist = [
+            { ...answer, lineCount: otherC[0] }, { ...answer, lineCount: otherC[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], lineCount: otherC[0] },
+        ];
+        return this.buildResult(grid, answer, dist, ascending ?
+            'כלל: הוספה — הוספה הדרגתית של קווים פנימיים (0 ← 1 ← 2)' :
+            'כלל: גריעה — הפחתה הדרגתית של קווים פנימיים (2 ← 1 ← 0)');
+    },
+
+    transformationPattern() {
+        const shapes = this.pickShapes(3), styles = ['solid', 'dashed', 'dotted'];
+        const fillType = randChoice(['outline', 'filled']);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) {
+                row.push({ shape: shapes[r], fill: fillType, size: 'medium', lineStyle: styles[c], hasBox: false });
+            }
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherSt = styles.filter(s => s !== answer.lineStyle);
+        const dist = [
+            { ...answer, lineStyle: otherSt[0] }, { ...answer, lineStyle: otherSt[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], lineStyle: otherSt[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: התמרה — סגנון הקו משתנה מרציף למקווקו ולמנוקד');
+    },
+
+    colorPattern() {
+        const shapes = this.pickShapes(3);
+        const colors = shuffle([...SVGShapes.COLORS]).slice(0, 3);
+        const fillType = randChoice(['outline', 'filled']);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) {
+                row.push({ shape: shapes[r], fill: fillType, size: 'medium', color: colors[c], hasBox: false });
+            }
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] }; grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const otherCl = SVGShapes.COLORS.filter(c => c !== answer.color);
+        const dist = [
+            { ...answer, color: otherCl[0] }, { ...answer, color: otherCl[1] },
+            { ...answer, shape: otherS[0] }, { ...answer, shape: otherS[1], color: otherCl[0] },
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: התקדמות צבעים — צבע ייחודי בכל עמודה');
+    },
+
+    arithmeticPattern() {
+        const shapes = this.pickShapes(3);
+        const fillType = randChoice(['outline', 'filled']);
+        const pairs = [
+            [1, 1], [1, 2], [2, 1], [1, 3], [2, 2], [3, 1],
+            [1, 4], [2, 3], [3, 2], [4, 1], [2, 4], [3, 3]
+        ];
+        const chosenPairs = shuffle(pairs).slice(0, 3);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const [a, b] = chosenPairs[r];
+            const sum = a + b;
+            const row = [
+                { shape: shapes[r], fill: fillType, size: 'medium', dotCount: a, hasBox: false },
+                { shape: shapes[r], fill: fillType, size: 'medium', dotCount: b, hasBox: false },
+                r === 2 ? null : { shape: shapes[r], fill: fillType, size: 'medium', dotCount: sum, hasBox: false }
+            ];
+            grid.push(row);
+        }
+        const [a, b] = chosenPairs[2];
+        const answer = { shape: shapes[2], fill: fillType, size: 'medium', dotCount: a + b, hasBox: false };
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const diffDots = [1, 2, 3, 4, 5, 6].filter(d => d !== answer.dotCount);
+        const dist = [
+            { ...answer, dotCount: a },
+            { ...answer, dotCount: b },
+            { ...answer, dotCount: randChoice(diffDots) },
+            { ...answer, shape: otherS[0] },
+            { ...answer, shape: otherS[1], dotCount: answer.dotCount }
+        ];
+        return this.buildResult(grid, answer, dist, `כלל: ייצוג חשבוני — עמודה 1 (${a} נקודות) + עמודה 2 (${b} נקודות) = עמודה 3 (${a + b} נקודות)`);
+    },
+
+    // ============ HARD PATTERNS (Set Operations & Multi-Rule) ============
+
+    unionPattern()       { return this._setOpPattern('union'); },
+    subtractionPattern() { return this._setOpPattern('subtraction'); },
+    xorPattern()         { return this._setOpPattern('xor'); },
+
+    combinedPattern() {
+        const shapes = this.pickShapes(3);
+        const rotations = [0, 90, 180];
+        const counts = [0, 1, 2];
+        const fillType = randChoice(['outline', 'filled']);
+        const grid = [];
+        for (let r = 0; r < 3; r++) {
+            const row = [];
+            for (let c = 0; c < 3; c++) {
+                row.push({
+                    shape: shapes[r],
+                    fill: fillType,
+                    size: 'medium',
+                    rotation: rotations[c],
+                    lineCount: counts[c],
+                    marker: true,
+                    hasBox: false
+                });
+            }
+            grid.push(row);
+        }
+        const answer = { ...grid[2][2] };
+        grid[2][2] = null;
+        const otherS = this.ALL_SHAPES.filter(s => s !== answer.shape);
+        const dist = [
+            { ...answer, rotation: 90 },
+            { ...answer, lineCount: 1 },
+            { ...answer, rotation: 270, lineCount: 1 },
+            { ...answer, shape: otherS[0] },
+            { ...answer, shape: otherS[1], rotation: 90 }
+        ];
+        return this.buildResult(grid, answer, dist, 'כלל: חוקיות משולבת — סיבוב ב-90° והוספת קו בו-זמנית לאורך העמודות');
+    },
+
+    _setOpPattern(op) {
+        const grid = [];
+        let answerEls;
+
+        for (let r = 0; r < 3; r++) {
+            const pool = shuffle([...COMPOUND_KEYS]);
+            let a, b, c;
+
+            if (op === 'union') {
+                a = pool.slice(0, randInt(2, 3));
+                const overlap = pool.slice(0, randInt(0, 1));
+                const bNew = pool.filter(e => !a.includes(e)).slice(0, randInt(1, 3));
+                b = shuffle([...overlap, ...bNew]);
+                c = [...new Set([...a, ...b])];
+            } else if (op === 'subtraction') {
+                a = pool.slice(0, randInt(3, 5));
+                b = shuffle([...a]).slice(0, randInt(1, 2));
+                const bSet = new Set(b);
+                c = a.filter(e => !bSet.has(e));
+            } else {
+                const shared = pool.slice(0, randInt(1, 2));
+                const aOnly = pool.slice(2, 2 + randInt(1, 2));
+                const bOnly = pool.filter(e => !shared.includes(e) && !aOnly.includes(e)).slice(0, randInt(1, 2));
+                a = shuffle([...shared, ...aOnly]);
+                b = shuffle([...shared, ...bOnly]);
+                const aSet = new Set(a), bSet = new Set(b);
+                c = [...a.filter(e => !bSet.has(e)), ...b.filter(e => !aSet.has(e))];
+            }
+
+            if (c.length === 0) c = [randChoice(pool)];
+
+            if (r === 2) {
+                answerEls = c;
+                grid.push([
+                    { type: 'compound', elements: [...a] },
+                    { type: 'compound', elements: [...b] },
+                    null,
+                ]);
+            } else {
+                grid.push([
+                    { type: 'compound', elements: [...a] },
+                    { type: 'compound', elements: [...b] },
+                    { type: 'compound', elements: [...c] },
+                ]);
+            }
+        }
+
+        const answer = { type: 'compound', elements: answerEls };
+        const distractors = this._compoundDistractors(answer, grid);
+        const ruleNames = {
+            union: 'כלל: איחוד קבוצות (A ∪ B = C) — שילוב האלמנטים מתא 1 ותא 2 יוצר את תא 3',
+            subtraction: 'כלל: חיסור קבוצות (A − B = C) — האלמנטים שבתא 2 מוחסרים מתא 1',
+            xor: 'כלל: הפרש סימטרי / XOR — אלמנטים משותפים מתבטלים, אלמנטים ייחודיים מתחברים'
+        };
+        return this.buildResult(grid, answer, distractors, ruleNames[op]);
+    },
+
+    _compoundDistractors(answer, grid) {
+        const answerSet = new Set(answer.elements);
+        const distractors = [];
+
+        if (answer.elements.length > 1) {
+            const d = [...answer.elements]; d.splice(randInt(0, d.length - 1), 1);
+            distractors.push({ type: 'compound', elements: d });
+        }
+
+        const extras = COMPOUND_KEYS.filter(e => !answerSet.has(e));
+        if (extras.length > 0) {
+            distractors.push({ type: 'compound', elements: [...answer.elements, randChoice(extras)] });
+        }
+
+        if (answer.elements.length > 0 && extras.length > 0) {
+            const d = [...answer.elements]; d[randInt(0, d.length - 1)] = randChoice(extras);
+            distractors.push({ type: 'compound', elements: d });
+        }
+
+        if (grid[2] && grid[2][0]) {
+            distractors.push({ type: 'compound', elements: [...grid[2][0].elements] });
+        }
+
+        if (grid[2] && grid[2][1]) {
+            distractors.push({ type: 'compound', elements: [...grid[2][1].elements] });
+        }
+
+        return distractors;
+    },
+};
+
+// ============================================================
+//  APP CONTROLLER
+// ============================================================
+const App = {
+    state: {
+        currentScreen: 'home',
+        quizType: null,
+        score: 0,
+        total: 0,
+        answered: false,
+        currentData: null,
+    },
+
+    init() {},
+
+    getDifficultyTier() {
+        const q = this.state.total;
+        if (q < 5) return 'easy';
+        if (q < 10) return 'medium';
+        return 'hard';
+    },
+
+    startQuiz(type) {
+        this.state.quizType = type;
+        this.state.score = 0;
+        this.state.total = 0;
+        this.state.answered = false;
+        document.getElementById('home-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.remove('active');
+        void document.getElementById('quiz-screen').offsetHeight;
+        document.getElementById('quiz-screen').classList.add('active');
+        document.getElementById('quiz-title').textContent =
+            type === 'series' ? '🔢 מבחן סדרות' : '🔷 מבחן מטריצות';
+        this.updateScore();
+        this.updateDifficultyBadge();
+        this.generateQuestion();
+    },
+
+    goHome() {
+        document.getElementById('quiz-screen').classList.remove('active');
+        void document.getElementById('home-screen').offsetHeight;
+        document.getElementById('home-screen').classList.add('active');
+    },
+
+    updateDifficultyBadge() {
+        const tier = this.getDifficultyTier();
+        const badge = document.getElementById('difficulty-badge');
+        const labels = {
+            easy: 'קל',
+            medium: 'בינוני',
+            hard: 'קשה'
+        };
+        badge.textContent = labels[tier] || 'קל';
+        badge.className = 'difficulty-badge' + (tier !== 'easy' ? ' ' + tier : '');
+    },
+
+    generateQuestion() {
+        this.state.answered = false;
+        this.hideFeedback();
+        this.hideNextBtn();
+        document.getElementById('question-card').classList.remove('fade-out');
+
+        const tier = this.getDifficultyTier();
+        this.updateDifficultyBadge();
+
+        if (this.state.quizType === 'series') {
+            this.state.currentData = Series.generate(tier);
+            this.renderSeriesQuestion(this.state.currentData);
+        } else {
+            this.state.currentData = Matrices.generate(tier);
+            this.renderMatrixQuestion(this.state.currentData);
+        }
+    },
+
+    renderSeriesQuestion(data) {
+        const qa = document.getElementById('question-area');
+        let html = '<div class="series-display">';
+        data.visible.forEach((num) => {
+            html += `<span class="seq-num">${num}</span><span class="seq-comma">,</span>`;
+        });
+        html += '<span class="seq-missing">?</span></div>';
+        qa.innerHTML = html;
+
+        const aa = document.getElementById('answers-area');
+        aa.className = 'answers-grid series-answers';
+        aa.innerHTML = data.options.map((val, i) =>
+            `<button class="answer-btn" id="answer-${i}" onclick="App.selectAnswer(${i})">
+                <span class="answer-index">${i + 1}</span>
+                <span class="answer-value">${val}</span>
+            </button>`
+        ).join('');
+    },
+
+    renderMatrixQuestion(data) {
+        const qa = document.getElementById('question-area');
+        let html = '<div class="matrix-display"><div class="matrix-grid">';
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const cell = data.grid[r][c];
+                const miss = cell === null;
+                html += `<div class="matrix-cell${miss ? ' missing' : ''}">`;
+                html += miss ? SVGShapes.questionMark() : SVGShapes.render(cell);
+                html += '</div>';
+            }
+        }
+        html += '</div></div>';
+        qa.innerHTML = html;
+
+        const aa = document.getElementById('answers-area');
+        aa.className = 'answers-grid matrix-answers';
+        aa.innerHTML = data.options.map((opt, i) =>
+            `<button class="answer-btn" id="answer-${i}" onclick="App.selectAnswer(${i})">
+                <span class="answer-index">${i + 1}</span>
+                <div class="answer-svg">${SVGShapes.render(opt)}</div>
+            </button>`
+        ).join('');
+    },
+
+    selectAnswer(index) {
+        if (this.state.answered) return;
+        this.state.answered = true;
+        this.state.total++;
+
+        const data = this.state.currentData;
+        const isCorrect = index === data.correctIndex;
+        if (isCorrect) this.state.score++;
+
+        const btns = document.querySelectorAll('.answer-btn');
+        btns.forEach((btn, i) => {
+            if (i === index && !isCorrect) btn.classList.add('wrong');
+            if (i === data.correctIndex) btn.classList.add('correct');
+            if (i !== index && i !== data.correctIndex) btn.classList.add('disabled');
+        });
+
+        if (this.state.quizType === 'matrices') {
+            const missingCell = document.querySelector('.matrix-cell.missing');
+            if (missingCell) {
+                missingCell.innerHTML = SVGShapes.render(data.answer);
+                missingCell.classList.remove('missing');
+                missingCell.style.background = isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+            }
+        }
+
+        this.showFeedback(isCorrect, data);
+        this.showNextBtn();
+        this.updateScore();
+    },
+
+    showFeedback(isCorrect, data) {
+        const bar = document.getElementById('feedback-bar');
+        const icon = document.getElementById('feedback-icon');
+        const text = document.getElementById('feedback-text');
+        const exp = document.getElementById('feedback-explanation');
+        bar.className = `feedback-bar show ${isCorrect ? 'correct' : 'wrong'}`;
+        icon.textContent = isCorrect ? '✓' : '✗';
+        text.textContent = isCorrect ? 'נכון מאוד! כל הכבוד.' :
+            this.state.quizType === 'series' ? `לא נכון — התשובה הנכונה היא ${data.answer}.` :
+            'לא נכון — התשובה הנכונה מסומנת למעלה.';
+        if (exp) {
+            exp.textContent = data.explanation || '';
+            exp.style.display = data.explanation ? 'block' : 'none';
+        }
+    },
+
+    hideFeedback() {
+        document.getElementById('feedback-bar').className = 'feedback-bar';
+        const exp = document.getElementById('feedback-explanation');
+        if (exp) {
+            exp.textContent = '';
+            exp.style.display = 'none';
+        }
+    },
+    showNextBtn() { document.getElementById('next-btn').className = 'next-btn show'; },
+    hideNextBtn() { document.getElementById('next-btn').className = 'next-btn'; },
+    updateScore() {
+        document.getElementById('score-display').textContent = `${this.state.score} / ${this.state.total}`;
+    },
+
+    nextQuestion() {
+        const card = document.getElementById('question-card');
+        card.classList.add('fade-out');
+        setTimeout(() => this.generateQuestion(), 350);
+    },
+};
+
+App.init();
+</script>
+</body>
+</html>
