@@ -236,6 +236,240 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
           />
         );
       }
+      case 'arrow': {
+        const aw = 13 * s, ah = 26 * s;
+        return (
+          <g>
+            <line x1={cx} y1={cy + ah * 0.7} x2={cx} y2={cy - ah * 0.6} stroke={c} strokeWidth={sw * 1.5} strokeLinecap="round" />
+            <polygon
+              points={`${cx},${cy - ah * 0.8} ${cx - aw},${cy - ah * 0.1} ${cx + aw},${cy - ah * 0.1}`}
+              fill={c}
+              stroke={c}
+              strokeWidth={sw * 0.5}
+            />
+          </g>
+        );
+      }
+      case 'nested_lines': {
+        const count = config.parallelCount || 1;
+        const sub = config.subType || 'corner';
+        const spacing = 7 * s;
+        const lines = [];
+
+        if (sub === 'corner') {
+          for (let i = 0; i < count; i++) {
+            const offset = (i - (count - 1) / 2) * spacing;
+            const xBase = config.flipX ? cx + 22 * s + offset : cx - 22 * s - offset;
+            const yBase = cy + 22 * s + offset;
+            const xMid = config.flipX ? cx - 18 * s + offset : cx + 18 * s - offset;
+            const yTop = cy - 22 * s - offset;
+            lines.push(
+              <polyline
+                key={i}
+                points={`${xBase},${yBase} ${xMid},${yBase} ${xMid},${yTop}`}
+                fill="none"
+                stroke={c}
+                strokeWidth={sw * 1.2}
+                strokeLinecap="round"
+                strokeLinejoin="miter"
+              />
+            );
+          }
+        } else if (sub === 'step' || sub === 'step_arrow') {
+          for (let i = 0; i < count; i++) {
+            const offset = (i - (count - 1) / 2) * spacing;
+            const y1 = cy - 18 * s + offset;
+            const y2 = cy + 18 * s + offset;
+            const x1 = cx - 22 * s;
+            const x2 = cx;
+            const x3 = cx + 22 * s;
+            lines.push(
+              <g key={i}>
+                <polyline
+                  points={`${x1},${y1} ${x2},${y1} ${x2},${y2} ${x3},${y2}`}
+                  fill="none"
+                  stroke={c}
+                  strokeWidth={sw * 1.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="miter"
+                />
+                {sub === 'step_arrow' && (
+                  <polygon
+                    points={`${x3 + 5 * s},${y2} ${x3 - 2 * s},${y2 - 4 * s} ${x3 - 2 * s},${y2 + 4 * s}`}
+                    fill={c}
+                  />
+                )}
+              </g>
+            );
+          }
+        }
+        return <g>{lines}</g>;
+      }
+      case 'wireframe': {
+        const id = config.wireframeId || 'square';
+        const wSw = sw * 1.25;
+        const b = 24 * s;
+        switch (id) {
+          case 'square':
+            return <rect x={cx - b} y={cy - b} width={b * 2} height={b * 2} fill="none" stroke={c} strokeWidth={wSw} />;
+          case 'trident':
+            return (
+              <g>
+                <line x1={cx - b} y1={cy + b} x2={cx + b} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx - b} y1={cy + b} x2={cx - b} y2={cy - b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx} y1={cy + b} x2={cx} y2={cy - b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx + b} y1={cy + b} x2={cx + b} y2={cy - b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+              </g>
+            );
+          case 'c_shape':
+            return (
+              <polyline
+                points={`${cx + b},${cy - b} ${cx - b},${cy - b} ${cx - b},${cy + b} ${cx + b},${cy + b}`}
+                fill="none"
+                stroke={c}
+                strokeWidth={wSw}
+                strokeLinecap="round"
+              />
+            );
+          case 'h_shape':
+            return (
+              <g>
+                <line x1={cx - b} y1={cy - b} x2={cx + b} y2={cy - b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx - b} y1={cy + b} x2={cx + b} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx} y1={cy - b} x2={cx} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+              </g>
+            );
+          case 'three_lines':
+            return (
+              <g>
+                <line x1={cx - 16 * s} y1={cy - b} x2={cx - 16 * s} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx} y1={cy - b} x2={cx} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx + 16 * s} y1={cy - b} x2={cx + 16 * s} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+              </g>
+            );
+          case 'fork':
+            return (
+              <g>
+                <line x1={cx - b} y1={cy - b} x2={cx - b} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx - b} y1={cy + b} x2={cx + b} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx} y1={cy + b} x2={cx} y2={cy - b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+              </g>
+            );
+          case 'arch':
+            return (
+              <polyline
+                points={`${cx - b},${cy + b} ${cx - b},${cy - b} ${cx + b},${cy - b} ${cx + b},${cy + b}`}
+                fill="none"
+                stroke={c}
+                strokeWidth={wSw}
+                strokeLinecap="round"
+              />
+            );
+          case 'two_lines':
+            return (
+              <g>
+                <line x1={cx - 11 * s} y1={cy - b} x2={cx - 11 * s} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx + 11 * s} y1={cy - b} x2={cx + 11 * s} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+              </g>
+            );
+          case 'l_shape':
+            return (
+              <polyline
+                points={`${cx - b},${cy - b} ${cx - b},${cy + b} ${cx + b},${cy + b}`}
+                fill="none"
+                stroke={c}
+                strokeWidth={wSw}
+                strokeLinecap="round"
+              />
+            );
+          case 'inv_t':
+            return (
+              <g>
+                <line x1={cx - b} y1={cy + b} x2={cx + b} y2={cy + b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+                <line x1={cx} y1={cy + b} x2={cx} y2={cy - b} stroke={c} strokeWidth={wSw} strokeLinecap="round" />
+              </g>
+            );
+          default:
+            return null;
+        }
+      }
+      case 'bowtie_overlay': {
+        const bwAngle = config.bowtieAngle || 0;
+        const dmAngle = config.diamondAngle || 0;
+        const bw = 24 * s, bh = 24 * s;
+        const parts = [];
+
+        if (config.hasBowtie) {
+          parts.push(
+            <g key="bowtie" transform={`rotate(${bwAngle}, ${cx}, ${cy})`}>
+              <polygon points={`${cx - bw},${cy - bh} ${cx + bw},${cy - bh} ${cx},${cy}`} fill="none" stroke={c} strokeWidth={sw} />
+              <polygon points={`${cx - bw},${cy + bh} ${cx + bw},${cy + bh} ${cx},${cy}`} fill="none" stroke={c} strokeWidth={sw} />
+            </g>
+          );
+        }
+
+        if (config.hasDiamond) {
+          parts.push(
+            <g key="diamond" transform={`rotate(${dmAngle}, ${cx}, ${cy})`}>
+              <polygon points={`${cx},${cy - bh} ${cx + bw * 0.75},${cy} ${cx},${cy + bh} ${cx - bw * 0.75},${cy}`} fill="none" stroke={c} strokeWidth={sw} />
+              <line x1={cx} y1={cy - bh} x2={cx} y2={cy + bh} stroke={c} strokeWidth={sw * 0.8} />
+            </g>
+          );
+        }
+
+        // Dot position
+        if (config.dotLocation) {
+          let dx = cx, dy = cy;
+          const off = 13 * s;
+          if (config.dotLocation === 'top') dy = cy - off;
+          else if (config.dotLocation === 'bottom') dy = cy + off;
+          else if (config.dotLocation === 'left') dx = cx - off;
+          else if (config.dotLocation === 'right') dx = cx + off;
+          else if (config.dotLocation === 'bottom_left') { dx = cx - off * 0.8; dy = cy + off * 0.8; }
+          else if (config.dotLocation === 'bottom_right') { dx = cx + off * 0.8; dy = cy + off * 0.8; }
+          parts.push(<circle key="dot" cx={dx} cy={dy} r={4.5 * s} fill={innerItemColor} />);
+        }
+
+        return <g>{parts}</g>;
+      }
+      case 'quadrant_arrow': {
+        const r = 30 * s;
+        const qPos = config.quadrantPos || 'top';
+        const aDir = config.arrowDirection || 'up';
+
+        const posMap: Record<string, [number, number]> = {
+          top: [cx, cy - 14 * s],
+          right: [cx + 14 * s, cy],
+          bottom: [cx, cy + 14 * s],
+          left: [cx - 14 * s, cy],
+        };
+        const [ax, ay] = posMap[qPos] || [cx, cy];
+
+        const rotMap: Record<string, number> = {
+          up: 0,
+          right: 90,
+          down: 180,
+          left: 270,
+        };
+        const aRot = rotMap[aDir] || 0;
+
+        return (
+          <g>
+            <polygon
+              points={`${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}`}
+              fill="none"
+              stroke={c}
+              strokeWidth={sw}
+            />
+            <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke={c} strokeWidth={sw * 0.8} />
+            <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke={c} strokeWidth={sw * 0.8} />
+            <g transform={`translate(${ax}, ${ay}) rotate(${aRot})`}>
+              <line x1={0} y1={6 * s} x2={0} y2={-5 * s} stroke={c} strokeWidth={sw * 1.3} strokeLinecap="round" />
+              <polygon points={`0,${-8 * s} ${-4 * s},${-2 * s} ${4 * s},${-2 * s}`} fill="none" stroke={c} strokeWidth={sw} />
+            </g>
+          </g>
+        );
+      }
       default:
         return null;
     }

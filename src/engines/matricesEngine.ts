@@ -58,15 +58,30 @@ export const MatricesEngine = {
 
     const shape = o.shape || '';
     // VISUAL NORMALIZATION:
-    // 1. For x_cross: SVG renderer draws only 2 stroke lines. 'fill' has zero visual effect.
-    // 2. For concentric: SVG renderer draws concentric circles. 'fill' has zero visual effect.
+    // Some shapes ignore fill or have specific rendering semantics:
     let fill: string = o.fill || 'outline';
-    if (shape === 'x_cross' || shape === 'concentric') {
+    if (
+      shape === 'x_cross' ||
+      shape === 'concentric' ||
+      shape === 'nested_lines' ||
+      shape === 'wireframe' ||
+      shape === 'bowtie_overlay' ||
+      shape === 'quadrant_arrow'
+    ) {
       fill = 'none';
     }
 
+    let rotation = o.rotation || 0;
+    // Circular symmetry: rotations of plain circle have 0 visual difference
+    if (shape === 'circle' && !o.dotCount && !o.lineCount) {
+      rotation = 0;
+    }
+    // 90-degree symmetry for square and diamond if without dots/lines/markers
+    if ((shape === 'square' || shape === 'diamond') && !o.dotCount && !o.lineCount && !o.marker) {
+      rotation = rotation % 90;
+    }
+
     const size = o.size || 'medium';
-    const rotation = o.rotation || 0;
     const lineCount = o.lineCount || 0;
     const dotCount = o.dotCount || 0;
     const color = o.color || '';
@@ -89,6 +104,18 @@ export const MatricesEngine = {
       ringCount,
       outerThick,
       marker,
+      o.subType || '',
+      o.parallelCount || 0,
+      o.flipX ? 'FX' : '',
+      o.flipY ? 'FY' : '',
+      o.wireframeId || '',
+      o.hasBowtie ? 'HB' : '',
+      o.hasDiamond ? 'HD' : '',
+      o.bowtieAngle || 0,
+      o.diamondAngle || 0,
+      o.dotLocation || '',
+      o.quadrantPos || '',
+      o.arrowDirection || '',
     ].join('|');
   },
 
@@ -114,7 +141,7 @@ export const MatricesEngine = {
 
     let fbAttempts = 0;
     const pool = ALL_SHAPES.filter((s) => s !== 'x_cross');
-    while (unique.length < 4 && fbAttempts < 60) {
+    while (unique.length < 4 && fbAttempts < 80) {
       fbAttempts++;
       const fb: ShapeConfig = { ...answer };
       if (fb.type === 'compound') {
@@ -122,6 +149,19 @@ export const MatricesEngine = {
         fb.elements = cPool.slice(0, randInt(1, 4));
       } else if (fb.shape === 'concentric') {
         fb.ringCount = randChoice([1, 2, 4, 5]);
+      } else if (fb.shape === 'nested_lines') {
+        fb.parallelCount = randChoice([1, 2, 4, 5]);
+        fb.flipX = !fb.flipX;
+      } else if (fb.shape === 'wireframe') {
+        const wfPool = ['square', 'trident', 'c_shape', 'h_shape', 'three_lines', 'arch', 'two_lines', 'l_shape', 'inv_t'] as const;
+        fb.wireframeId = randChoice(wfPool.filter((w) => w !== fb.wireframeId));
+      } else if (fb.shape === 'bowtie_overlay') {
+        fb.bowtieAngle = randChoice([0, 30, 45, 90]);
+        fb.diamondAngle = randChoice([0, 30, 45, 90]);
+        fb.dotLocation = randChoice(['top', 'bottom', 'left', 'right', 'center']);
+      } else if (fb.shape === 'quadrant_arrow') {
+        fb.quadrantPos = randChoice(['top', 'right', 'bottom', 'left']);
+        fb.arrowDirection = randChoice(['up', 'right', 'down', 'left']);
       } else {
         fb.shape = randChoice(pool);
         fb.fill = randChoice(ALL_FILLS);
@@ -360,6 +400,193 @@ export const MatricesEngine = {
     );
   },
 
+  // Image 2: Nested / Parallel Lines (1 -> 2 -> 3)
+  nestedLinesPattern(): MatrixQuestion {
+    const grid: (ShapeConfig | null)[][] = [
+      [
+        { shape: 'nested_lines', subType: 'step_arrow', parallelCount: 1, size: 'medium', hasBox: true },
+        { shape: 'nested_lines', subType: 'step_arrow', parallelCount: 2, size: 'medium', hasBox: true },
+        { shape: 'nested_lines', subType: 'step_arrow', parallelCount: 3, size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'nested_lines', subType: 'step', parallelCount: 1, size: 'medium', hasBox: true },
+        { shape: 'nested_lines', subType: 'step', parallelCount: 2, size: 'medium', hasBox: true },
+        { shape: 'nested_lines', subType: 'step', parallelCount: 3, size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'nested_lines', subType: 'corner', parallelCount: 1, flipX: false, size: 'medium', hasBox: true },
+        { shape: 'nested_lines', subType: 'corner', parallelCount: 2, flipX: false, size: 'medium', hasBox: true },
+        null,
+      ],
+    ];
+
+    const answer: ShapeConfig = {
+      shape: 'nested_lines',
+      subType: 'corner',
+      parallelCount: 3,
+      flipX: false,
+      size: 'medium',
+      hasBox: true,
+    };
+
+    const dist: ShapeConfig[] = [
+      { shape: 'nested_lines', subType: 'corner', parallelCount: 3, flipX: true, size: 'medium', hasBox: true }, // Option 5 from Police Exam Image 2
+      { shape: 'nested_lines', subType: 'step', parallelCount: 3, size: 'medium', hasBox: true }, // Option 4 from Police Exam Image 2
+      { shape: 'nested_lines', subType: 'step_arrow', parallelCount: 3, size: 'medium', hasBox: true }, // Option 1 from Police Exam Image 2
+      { shape: 'nested_lines', subType: 'corner', parallelCount: 2, flipX: false, size: 'medium', hasBox: true },
+      { shape: 'nested_lines', subType: 'corner', parallelCount: 4, flipX: false, size: 'medium', hasBox: true },
+    ];
+
+    return this.buildResult(
+      grid,
+      answer,
+      dist,
+      'כלל: קווים מקבילים ומדורגים (מבחן המשטרה) — בכל שורה מופיע סגנון קו קבוע (חץ מדורג, קו מדורג, פינות ישרות), ובכל עמודה כמות הקווים המקבילים עולה ב-1 (1 ← 2 ← 3). בעמודה השלישית נדרשות 3 פינות ישרות הפונות לאותו כיוון.',
+      '3x3',
+      'מטריצה 3×3 — קווים מקבילים מדורגים'
+    );
+  },
+
+  // Image 3: Structural Wireframe Segment Counting (4 -> 3 -> 2)
+  wireframeSegmentCountPattern(): MatrixQuestion {
+    const grid: (ShapeConfig | null)[][] = [
+      [
+        { shape: 'wireframe', wireframeId: 'trident', size: 'medium', hasBox: true },
+        { shape: 'wireframe', wireframeId: 'c_shape', size: 'medium', hasBox: true },
+        { shape: 'wireframe', wireframeId: 'l_shape', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'wireframe', wireframeId: 'square', size: 'medium', hasBox: true },
+        { shape: 'wireframe', wireframeId: 'h_shape', size: 'medium', hasBox: true },
+        { shape: 'wireframe', wireframeId: 'inv_t', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'wireframe', wireframeId: 'trident', size: 'medium', hasBox: true },
+        { shape: 'wireframe', wireframeId: 'arch', size: 'medium', hasBox: true },
+        null,
+      ],
+    ];
+
+    const answer: ShapeConfig = {
+      shape: 'wireframe',
+      wireframeId: 'two_lines',
+      size: 'medium',
+      hasBox: true,
+    };
+
+    const dist: ShapeConfig[] = [
+      { shape: 'wireframe', wireframeId: 'inv_t', size: 'medium', hasBox: true },
+      { shape: 'wireframe', wireframeId: 'l_shape', size: 'medium', hasBox: true },
+      { shape: 'wireframe', wireframeId: 'arch', size: 'medium', hasBox: true },
+      { shape: 'wireframe', wireframeId: 'three_lines', size: 'medium', hasBox: true },
+      { shape: 'wireframe', wireframeId: 'square', size: 'medium', hasBox: true },
+    ];
+
+    return this.buildResult(
+      grid,
+      answer,
+      dist,
+      'כלל: ספירת מקטעי קווים במבנה (מבחן המשטרה) — בכל שורה מספר המקטעים המרכיבים את הצורה פוחת ב-1: 4 מקטעים בעמודה הראשונה (ריבוע/קלשון) ← 3 מקטעים בעמודה השנייה (ח׳, C, H) ← 2 מקטעים בעמודה השלישית (שני קווים ישרים).',
+      '3x3',
+      'מטריצה 3×3 — ספירת מקטעים מבניים'
+    );
+  },
+
+  // Image 4: Bowtie + Diamond Superposition Overlay (Col 1 + Col 2 = Col 3)
+  superpositionBowtiePattern(): MatrixQuestion {
+    const grid: (ShapeConfig | null)[][] = [
+      [
+        { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: false, bowtieAngle: 0, dotLocation: 'top', size: 'medium', hasBox: true },
+        { shape: 'bowtie_overlay', hasBowtie: false, hasDiamond: true, diamondAngle: 45, dotLocation: 'bottom', size: 'medium', hasBox: true },
+        { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: true, bowtieAngle: 0, diamondAngle: 45, dotLocation: 'top', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: false, bowtieAngle: 45, dotLocation: 'bottom', size: 'medium', hasBox: true },
+        { shape: 'bowtie_overlay', hasBowtie: false, hasDiamond: true, diamondAngle: 0, dotLocation: 'top', size: 'medium', hasBox: true },
+        { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: true, bowtieAngle: 45, diamondAngle: 0, dotLocation: 'bottom', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: false, bowtieAngle: 30, dotLocation: 'bottom_right', size: 'medium', hasBox: true },
+        { shape: 'bowtie_overlay', hasBowtie: false, hasDiamond: true, diamondAngle: 0, dotLocation: 'top', size: 'medium', hasBox: true },
+        null,
+      ],
+    ];
+
+    const answer: ShapeConfig = {
+      shape: 'bowtie_overlay',
+      hasBowtie: true,
+      hasDiamond: true,
+      bowtieAngle: 30,
+      diamondAngle: 0,
+      dotLocation: 'bottom_right',
+      size: 'medium',
+      hasBox: true,
+    };
+
+    const dist: ShapeConfig[] = [
+      { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: true, bowtieAngle: 30, diamondAngle: 0, dotLocation: 'top', size: 'medium', hasBox: true },
+      { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: true, bowtieAngle: 0, diamondAngle: 0, dotLocation: 'bottom_right', size: 'medium', hasBox: true },
+      { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: true, bowtieAngle: 30, diamondAngle: 45, dotLocation: 'bottom_right', size: 'medium', hasBox: true },
+      { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: false, bowtieAngle: 30, dotLocation: 'bottom_right', size: 'medium', hasBox: true },
+      { shape: 'bowtie_overlay', hasBowtie: true, hasDiamond: true, bowtieAngle: 45, diamondAngle: 0, dotLocation: 'bottom', size: 'medium', hasBox: true },
+    ];
+
+    return this.buildResult(
+      grid,
+      answer,
+      dist,
+      'כלל: חיבור צורות ועל-מיקום (מבחן המשטרה) — עמודה 1 (עניבת פרפר עם נקודה שחורה) מונחת מעל עמודה 2 (מעוין חצוי) לקבלת הצורה השלמה בעמודה 3 (על-מיקום: עמודה 1 + עמודה 2 = עמודה 3) תוך שמירה על זוויות הסיבוב ומיקום הנקודה השחורה.',
+      '3x3',
+      'מטריצה 3×3 — על-מיקום (A + B = C)'
+    );
+  },
+
+  // Image 5: Quadrant Arrow Sequence Pattern
+  quadrantArrowSequencePattern(): MatrixQuestion {
+    const grid: (ShapeConfig | null)[][] = [
+      [
+        { shape: 'quadrant_arrow', quadrantPos: 'top', arrowDirection: 'up', size: 'medium', hasBox: true },
+        { shape: 'quadrant_arrow', quadrantPos: 'right', arrowDirection: 'right', size: 'medium', hasBox: true },
+        { shape: 'quadrant_arrow', quadrantPos: 'bottom', arrowDirection: 'down', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'quadrant_arrow', quadrantPos: 'right', arrowDirection: 'right', size: 'medium', hasBox: true },
+        { shape: 'quadrant_arrow', quadrantPos: 'bottom', arrowDirection: 'down', size: 'medium', hasBox: true },
+        { shape: 'quadrant_arrow', quadrantPos: 'left', arrowDirection: 'left', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'quadrant_arrow', quadrantPos: 'bottom', arrowDirection: 'down', size: 'medium', hasBox: true },
+        { shape: 'quadrant_arrow', quadrantPos: 'left', arrowDirection: 'left', size: 'medium', hasBox: true },
+        null,
+      ],
+    ];
+
+    const answer: ShapeConfig = {
+      shape: 'quadrant_arrow',
+      quadrantPos: 'top',
+      arrowDirection: 'up',
+      size: 'medium',
+      hasBox: true,
+    };
+
+    const dist: ShapeConfig[] = [
+      { shape: 'quadrant_arrow', quadrantPos: 'top', arrowDirection: 'down', size: 'medium', hasBox: true },
+      { shape: 'quadrant_arrow', quadrantPos: 'right', arrowDirection: 'up', size: 'medium', hasBox: true },
+      { shape: 'quadrant_arrow', quadrantPos: 'bottom', arrowDirection: 'down', size: 'medium', hasBox: true },
+      { shape: 'quadrant_arrow', quadrantPos: 'left', arrowDirection: 'left', size: 'medium', hasBox: true },
+      { shape: 'quadrant_arrow', quadrantPos: 'top', arrowDirection: 'right', size: 'medium', hasBox: true },
+    ];
+
+    return this.buildResult(
+      grid,
+      answer,
+      dist,
+      'כלל: תנועה ברבעים וסיבוב חץ (מבחן המשטרה) — החץ נע בין רבעי המעוין עם כיוון השעון (עליון ← ימני ← תחתון ← שמאלי), ובמקביל מסתובב ב-90° עם כיוון השעון בכל שלב.',
+      '3x3',
+      'מטריצה 3×3 — תנועת רובע וסיבוב חץ'
+    );
+  },
+
   // ============ CLASSIC MATRICES PATTERNS ============
 
   shapeFillPattern(): MatrixQuestion {
@@ -463,7 +690,9 @@ export const MatricesEngine = {
   },
 
   rotationPattern(): MatrixQuestion {
-    const shapes = this.pickShapes(3);
+    // Only choose strictly directional shapes where each 90-degree rotation is visually distinct!
+    const directionalShapes: ShapeType[] = ['triangle', 'arrow', 'trapezoid'];
+    const shapes = shuffle(directionalShapes);
     const rotations = [0, 90, 180];
     const fillType = randChoice<FillType>(['outline', 'filled']);
     const grid: (ShapeConfig | null)[][] = [];
@@ -476,30 +705,38 @@ export const MatricesEngine = {
           fill: fillType,
           size: 'medium',
           rotation: rotations[c],
-          marker: true,
-          hasBox: false,
+          hasBox: true,
         });
       }
       grid.push(row);
     }
 
-    const answer = { ...grid[2][2]! };
+    const targetShape = shapes[2];
+    const answer: ShapeConfig = {
+      shape: targetShape,
+      fill: fillType,
+      size: 'medium',
+      rotation: 180,
+      hasBox: true,
+    };
     grid[2][2] = null;
-    const otherS = ALL_SHAPES.filter((s) => s !== answer.shape);
-    const otherR = [0, 90, 180, 270].filter((r) => r !== answer.rotation);
 
+    const otherS = directionalShapes.filter((s) => s !== targetShape);
     const dist: ShapeConfig[] = [
-      { ...answer, rotation: otherR[0] },
-      { ...answer, rotation: otherR[1] },
-      { ...answer, shape: otherS[0] },
-      { ...answer, shape: otherS[1], rotation: otherR[0] },
+      { shape: targetShape, fill: fillType, size: 'medium', rotation: 0, hasBox: true },
+      { shape: targetShape, fill: fillType, size: 'medium', rotation: 90, hasBox: true },
+      { shape: targetShape, fill: fillType, size: 'medium', rotation: 270, hasBox: true },
+      { shape: otherS[0], fill: fillType, size: 'medium', rotation: 180, hasBox: true },
+      { shape: otherS[1], fill: fillType, size: 'medium', rotation: 180, hasBox: true },
     ];
 
     return this.buildResult(
       grid,
       answer,
       dist,
-      'כלל: סיבוב — הצורות מסתובבות ב-90° עם כיוון השעון לאורך העמודות'
+      'כלל: סיבוב ב-90° — בכל שורה מופיעה צורה בעלת כיווניות המסתובבת ב-90° עם כיוון השעון לאורך העמודות (0° ← 90° ← 180°)',
+      '3x3',
+      'מטריצה 3×3 — סיבוב עם כיוון השעון'
     );
   },
 
@@ -764,11 +1001,14 @@ export const MatricesEngine = {
       this.shapeFillPattern,
       this.fillShapePattern,
       this.sizePattern,
+      this.nestedLinesPattern,
     ];
 
     const medium = [
-      ...easy,
       this.contourDivisionSolidPattern,
+      this.nestedLinesPattern,
+      this.wireframeSegmentCountPattern,
+      this.quadrantArrowSequencePattern,
       this.dualAttributeMatrixPattern,
       this.rotationPattern,
       this.additionPattern,
@@ -779,9 +1019,12 @@ export const MatricesEngine = {
     ];
 
     const hard = [
-      ...medium,
-      this.contourDivisionSolidPattern,
+      this.superpositionBowtiePattern,
+      this.quadrantArrowSequencePattern,
+      this.wireframeSegmentCountPattern,
+      this.nestedLinesPattern,
       this.dualAttributeMatrixPattern,
+      this.contourDivisionSolidPattern,
       this.unionPattern,
       this.subtractionPattern,
       this.xorPattern,

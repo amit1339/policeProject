@@ -7,7 +7,12 @@ export type ShapeType =
   | 'trapezoid'
   | 'triangle'
   | 'hexagon'
-  | 'concentric';
+  | 'concentric'
+  | 'nested_lines'
+  | 'wireframe'
+  | 'bowtie_overlay'
+  | 'quadrant_arrow'
+  | 'arrow';
 
 export type FillType =
   | 'outline'
@@ -36,6 +41,29 @@ export interface ShapeConfig {
   lineStyle?: LineStyle;
   type?: 'compound';
   elements?: string[];
+  // Extended properties for advanced police exam patterns:
+  subType?: 'step_arrow' | 'step' | 'corner' | 'diag_arrow';
+  parallelCount?: number;
+  flipX?: boolean;
+  flipY?: boolean;
+  wireframeId?:
+    | 'square'
+    | 'trident'
+    | 'c_shape'
+    | 'h_shape'
+    | 'three_lines'
+    | 'fork'
+    | 'arch'
+    | 'two_lines'
+    | 'l_shape'
+    | 'inv_t';
+  hasBowtie?: boolean;
+  hasDiamond?: boolean;
+  bowtieAngle?: number;
+  diamondAngle?: number;
+  dotLocation?: 'top' | 'bottom' | 'left' | 'right' | 'center' | 'bottom_left' | 'bottom_right';
+  quadrantPos?: 'top' | 'right' | 'bottom' | 'left';
+  arrowDirection?: 'up' | 'right' | 'down' | 'left';
 }
 
 export type MatrixLayout = '3x3' | '3x2';
