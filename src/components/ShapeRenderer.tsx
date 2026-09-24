@@ -40,29 +40,33 @@ interface ShapeRendererProps {
   config: ShapeConfig | null | undefined;
   className?: string;
   isQuestionMark?: boolean;
+  theme?: 'police' | 'dark';
 }
 
 export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
   config,
   className = '',
   isQuestionMark = false,
+  theme = 'police',
 }) => {
   const patternId = useId().replace(/:/g, '_');
   const crosshatchId = `ch_${patternId}`;
   const hatchId = `h_${patternId}`;
 
+  // Question mark rendering with high legibility
   if (!config || isQuestionMark) {
+    const qColor = theme === 'dark' ? '#38bdf8' : '#102a45';
     return (
       <svg viewBox="0 0 100 100" className={`w-full h-full ${className}`} xmlns="http://www.w3.org/2000/svg">
         <text
           x="50"
-          y="64"
+          y="68"
           textAnchor="middle"
-          fontSize="50"
+          fontSize="56"
           fontWeight="800"
-          fill="#3b82f6"
+          fill={qColor}
           fontFamily="'Rubik', sans-serif"
-          opacity="0.8"
+          opacity="0.9"
         >
           ?
         </text>
@@ -70,13 +74,19 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     );
   }
 
-  const c = config.color || '#c8d6e5';
-  const sw = 2.5;
+  // Base theme colors
+  const defaultColor = theme === 'dark' ? '#c8d6e5' : '#102a45';
+  const c = config.color || defaultColor;
+  const contrastColor = theme === 'dark' ? '#06091a' : '#ffffff';
+  // If shape is solid filled, inner lines/dots MUST be contrasting so they never blend in!
+  const innerItemColor = config.fill === 'filled' ? contrastColor : c;
+
+  const sw = 2.4;
   const sizeMap: Record<string, number> = {
     small: 0.52,
     medium: 0.78,
     large: 0.98,
-    xlarge: 1.24,
+    xlarge: 1.22,
   };
   const s = sizeMap[config.size || 'medium'] || 0.78;
   const cx = 50, cy = 50;
@@ -231,84 +241,142 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
     }
   };
 
-  // Internal decorations
-  const renderDecorations = () => {
-    if (config.fill !== 'decorated') return null;
-    const decSw = 1.8;
-    const r = 28 * s;
+  // Double contour for shapes (Police Exam Question 5/Row 3)
+  const renderDoubleContour = () => {
+    if (config.fill !== 'double' && !config.doubleContour) return null;
+    const isw = sw * 0.9;
     switch (config.shape) {
       case 'circle': {
-        const len = r * 0.7;
-        return (
-          <>
-            <line x1={cx} y1={cy - len} x2={cx} y2={cy + len} stroke={c} strokeWidth={decSw} />
-            <line x1={cx - len} y1={cy} x2={cx + len} y2={cy} stroke={c} strokeWidth={decSw} />
-          </>
-        );
+        const r2 = 21 * s;
+        return <circle cx={cx} cy={cy} r={r2} fill="none" stroke={c} strokeWidth={isw} />;
       }
       case 'square': {
-        const h = 27 * s;
-        return (
-          <>
-            <line x1={cx} y1={cy - h} x2={cx} y2={cy + h} stroke={c} strokeWidth={decSw} />
-            <line x1={cx - h} y1={cy} x2={cx + h} y2={cy} stroke={c} strokeWidth={decSw} />
-          </>
-        );
+        const h2 = 20 * s;
+        return <rect x={cx - h2} y={cy - h2} width={h2 * 2} height={h2 * 2} fill="none" stroke={c} strokeWidth={isw} />;
       }
       case 'diamond': {
-        const ri = 30 * s * 0.5;
-        return (
-          <>
-            <line x1={cx - ri} y1={cy - ri} x2={cx + ri} y2={cy + ri} stroke={c} strokeWidth={decSw} />
-            <line x1={cx + ri} y1={cy - ri} x2={cx - ri} y2={cy + ri} stroke={c} strokeWidth={decSw} />
-          </>
-        );
-      }
-      case 'cross':
-        return <circle cx={cx} cy={cy} r={4 * s} fill={c} />;
-      case 'triangle': {
-        const r2 = 30 * s * 0.45, yOff = 4 * s;
+        const r2 = 22 * s;
         return (
           <polygon
-            points={`${cx},${cy - r2 + yOff} ${cx + r2 * 0.95},${cy + r2 * 0.65 + yOff} ${cx - r2 * 0.95},${cy + r2 * 0.65 + yOff}`}
+            points={`${cx},${cy - r2} ${cx + r2},${cy} ${cx},${cy + r2} ${cx - r2},${cy}`}
             fill="none"
             stroke={c}
-            strokeWidth={decSw}
-            strokeLinejoin="round"
+            strokeWidth={isw}
+          />
+        );
+      }
+      case 'triangle': {
+        const r2 = 21 * s;
+        return (
+          <polygon
+            points={`${cx},${cy - r2} ${cx + r2 * 1.05},${cy + r2 * 0.75} ${cx - r2 * 1.05},${cy + r2 * 0.75}`}
+            fill="none"
+            stroke={c}
+            strokeWidth={isw}
           />
         );
       }
       case 'hexagon': {
-        const ri = 28 * s * 0.5, pts = [];
+        const r2 = 20 * s;
+        const pts = [];
         for (let i = 0; i < 6; i++) {
           const angle = (Math.PI / 3) * i - Math.PI / 6;
-          pts.push(`${cx + ri * Math.cos(angle)},${cy + ri * Math.sin(angle)}`);
+          pts.push(`${cx + r2 * Math.cos(angle)},${cy + r2 * Math.sin(angle)}`);
         }
-        return <polygon points={pts.join(' ')} fill="none" stroke={c} strokeWidth={decSw} strokeLinejoin="round" />;
+        return <polygon points={pts.join(' ')} fill="none" stroke={c} strokeWidth={isw} />;
       }
       default:
         return null;
     }
   };
 
-  // Internal lines
+  // Internal divisions & decorations (Police Test Q5/Q6: Cross, 4 Quadrants, Crossed Diagonals)
+  const renderDecorations = () => {
+    if (config.fill !== 'decorated') return null;
+    const decSw = 2.0;
+    switch (config.shape) {
+      case 'circle': {
+        // Circle with dividing cross (Police Exam Row 1 Col 2)
+        const r = 28 * s;
+        return (
+          <g>
+            <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke={innerItemColor} strokeWidth={decSw} />
+            <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke={innerItemColor} strokeWidth={decSw} />
+          </g>
+        );
+      }
+      case 'square': {
+        // Square divided into 4 quadrants (Police Exam Row 3 Col 2)
+        const h = 27 * s;
+        return (
+          <g>
+            <line x1={cx} y1={cy - h} x2={cx} y2={cy + h} stroke={innerItemColor} strokeWidth={decSw} />
+            <line x1={cx - h} y1={cy} x2={cx + h} y2={cy} stroke={innerItemColor} strokeWidth={decSw} />
+          </g>
+        );
+      }
+      case 'diamond': {
+        // Diamond with crossed diagonals connecting vertices (Police Exam Row 2 Col 2)
+        const r = 30 * s;
+        return (
+          <g>
+            <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke={innerItemColor} strokeWidth={decSw} />
+            <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke={innerItemColor} strokeWidth={decSw} />
+          </g>
+        );
+      }
+      case 'cross':
+        return <circle cx={cx} cy={cy} r={4.5 * s} fill={innerItemColor} />;
+      case 'triangle': {
+        // Triangle with vertical bisector and horizontal line
+        const r = 30 * s;
+        return (
+          <g>
+            <line x1={cx} y1={cy - r} x2={cx} y2={cy + r * 0.75} stroke={innerItemColor} strokeWidth={decSw} />
+            <line x1={cx - r * 0.55} y1={cy} x2={cx + r * 0.55} y2={cy} stroke={innerItemColor} strokeWidth={decSw} />
+          </g>
+        );
+      }
+      case 'hexagon': {
+        // Hexagon with lines connecting opposite vertices
+        const r = 28 * s;
+        return (
+          <g>
+            <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke={innerItemColor} strokeWidth={decSw} />
+            <line x1={cx - r * 0.866} y1={cy - r * 0.5} x2={cx + r * 0.866} y2={cy + r * 0.5} stroke={innerItemColor} strokeWidth={decSw} />
+            <line x1={cx - r * 0.866} y1={cy + r * 0.5} x2={cx + r * 0.866} y2={cy - r * 0.5} stroke={innerItemColor} strokeWidth={decSw} />
+          </g>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
+  // Internal lines (Line counting patterns: 0, 1, 2, 3 lines)
   const renderInternalLines = () => {
     if (!config.lineCount) return null;
-    const r = 28 * s * 0.72;
-    const lineSw = sw * 0.7;
+    const r = 26 * s;
+    const lineSw = sw * 0.85;
     return (
-      <>
-        {config.lineCount >= 1 && <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke={c} strokeWidth={lineSw} strokeLinecap="round" />}
-        {config.lineCount >= 2 && <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke={c} strokeWidth={lineSw} strokeLinecap="round" />}
-        {config.lineCount >= 3 && <line x1={cx - r * 0.71} y1={cy - r * 0.71} x2={cx + r * 0.71} y2={cy + r * 0.71} stroke={c} strokeWidth={lineSw} strokeLinecap="round" />}
-      </>
+      <g>
+        {config.lineCount >= 1 && (
+          <line x1={cx - r} y1={cy} x2={cx + r} y2={cy} stroke={innerItemColor} strokeWidth={lineSw} strokeLinecap="round" />
+        )}
+        {config.lineCount >= 2 && (
+          <line x1={cx} y1={cy - r} x2={cx} y2={cy + r} stroke={innerItemColor} strokeWidth={lineSw} strokeLinecap="round" />
+        )}
+        {config.lineCount >= 3 && (
+          <line x1={cx - r * 0.71} y1={cy - r * 0.71} x2={cx + r * 0.71} y2={cy + r * 0.71} stroke={innerItemColor} strokeWidth={lineSw} strokeLinecap="round" />
+        )}
+      </g>
     );
   };
 
-  // Internal dots
+  // Internal dots (Arithmetic patterns)
   const renderDots = () => {
     if (!config.dotCount) return null;
-    const r = 4.2 * s;
+    const r = 4.4 * s;
     const off = 13 * s;
     const positions: Record<number, [number, number][]> = {
       1: [[cx, cy]],
@@ -322,17 +390,24 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
       ]
     };
     const pts = positions[config.dotCount] || [[cx, cy]];
-    return pts.map(([x, y], idx) => <circle key={idx} cx={x} cy={y} r={r} fill={c} />);
+    return (
+      <g>
+        {pts.map(([x, y], idx) => (
+          <circle key={idx} cx={x} cy={y} r={r} fill={innerItemColor} />
+        ))}
+      </g>
+    );
   };
 
   // Rotating group if rotation specified
   let shapeContent = (
     <>
       {renderBaseShape()}
+      {renderDoubleContour()}
       {renderDecorations()}
       {renderInternalLines()}
       {renderDots()}
-      {config.marker && <circle cx={50} cy={50 - 28 * s - 7} r={4.5} fill={c} />}
+      {config.marker && <circle cx={50} cy={50 - 28 * s - 7} r={4.5} fill={innerItemColor} />}
     </>
   );
 
@@ -343,17 +418,18 @@ export const ShapeRenderer: React.FC<ShapeRendererProps> = ({
   return (
     <svg viewBox="0 0 100 100" className={`w-full h-full ${className}`} xmlns="http://www.w3.org/2000/svg">
       <defs>
-        {/* Fine crosshatch mesh pattern */}
-        <pattern id={crosshatchId} width="8" height="8" patternUnits="userSpaceOnUse">
-          <path d="M 0 0 L 8 8 M 8 0 L 0 8" fill="none" stroke={c} strokeWidth="1.2" />
+        {/* Fine crosshatch mesh pattern (Police Exam Q4) */}
+        <pattern id={crosshatchId} width="7" height="7" patternUnits="userSpaceOnUse">
+          <path d="M 0 0 L 7 7 M 7 0 L 0 7" fill="none" stroke={c} strokeWidth="1.2" />
         </pattern>
         {/* Diagonal hatch pattern */}
-        <pattern id={hatchId} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="7" stroke={c} strokeWidth="1.5" />
+        <pattern id={hatchId} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={c} strokeWidth="1.4" />
         </pattern>
       </defs>
 
-      {config.hasBox && <rect x="6" y="6" width="88" height="88" fill="none" stroke={c} strokeWidth="2" rx="3" />}
+      {/* Police Test outer bounding box if specified */}
+      {config.hasBox && <rect x="5" y="5" width="90" height="90" fill="none" stroke={c} strokeWidth="2.2" />}
       {shapeContent}
     </svg>
   );

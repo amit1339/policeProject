@@ -9,8 +9,6 @@
     margin: 0;
     padding: 0;
     font-family: 'Rubik', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #06091a;
-    color: #f1f5f9;
     min-height: 100vh;
     overflow-x: hidden;
     line-height: 1.6;
@@ -19,7 +17,7 @@
   }
 }
 
-/* Background animated glow mesh */
+/* Background animated glow mesh for dark mode */
 .bg-mesh-glow {
   position: fixed;
   inset: 0;
@@ -30,6 +28,17 @@
     radial-gradient(circle 600px at 85% 85%, rgba(139, 92, 246, 0.12), transparent 70%),
     radial-gradient(circle 400px at 50% 50%, rgba(6, 182, 212, 0.05), transparent 70%);
   animation: meshFloat 18s ease-in-out infinite alternate;
+}
+
+/* Subtle slate background for Police theme */
+.bg-police-pattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle 800px at 50% -100px, rgba(16, 42, 69, 0.06), transparent 70%),
+    linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
 }
 
 @keyframes meshFloat {

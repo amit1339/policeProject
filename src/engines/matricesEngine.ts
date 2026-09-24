@@ -294,6 +294,49 @@ export const MatricesEngine = {
     );
   },
 
+  // Question 5 (Police Test): Contour -> Internal Division -> Solid Fill
+  contourDivisionSolidPattern(): MatrixQuestion {
+    // 3 distinct shapes (Circle, Diamond, Square as in Police Exam)
+    // Row 1: circle outline -> circle decorated (cross) -> circle filled
+    // Row 2: diamond outline -> diamond decorated (crossed diagonals) -> diamond filled
+    // Row 3: square double contour -> square decorated (4 quadrants) -> ? (square filled!)
+    const grid: (ShapeConfig | null)[][] = [
+      [
+        { shape: 'circle', fill: 'outline', size: 'medium', hasBox: true },
+        { shape: 'circle', fill: 'decorated', size: 'medium', hasBox: true },
+        { shape: 'circle', fill: 'filled', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'diamond', fill: 'outline', size: 'medium', hasBox: true },
+        { shape: 'diamond', fill: 'decorated', size: 'medium', hasBox: true },
+        { shape: 'diamond', fill: 'filled', size: 'medium', hasBox: true },
+      ],
+      [
+        { shape: 'square', fill: 'double', size: 'medium', hasBox: true },
+        { shape: 'square', fill: 'decorated', size: 'medium', hasBox: true },
+        null,
+      ],
+    ];
+
+    const answer: ShapeConfig = { shape: 'square', fill: 'filled', size: 'medium', hasBox: true };
+    const dist: ShapeConfig[] = [
+      { shape: 'circle', fill: 'outline', size: 'medium', hasBox: true },      // Ans 1 in Police Image 2
+      { shape: 'diamond', fill: 'filled', size: 'medium', hasBox: true },     // Ans 2 in Police Image 2
+      { shape: 'diamond', fill: 'decorated', size: 'medium', hasBox: true },  // Ans 4 in Police Image 2
+      { shape: 'square', fill: 'double', size: 'medium', hasBox: true },      // Ans 5 in Police Image 2
+      { shape: 'square', fill: 'decorated', size: 'medium', hasBox: true },   // Ans 6 in Police Image 2
+    ];
+
+    return this.buildResult(
+      grid,
+      answer,
+      dist,
+      'כלל: התקדמות תלת-שלבית (מבחן המשטרה) — בכל שורה מופיעה אותה צורה בשלושה שלבים קבועים: מתווה קו (פשוט או כפול) ← חלוקה פנימית (צלב או אלכסונים) ← צורה מלאה בצבע כהה. בשורה השלישית התשובה החסרה היא ריבוע מלא בצבע כהה.',
+      '3x3',
+      'מטריצה 3×3 — מתווה ← חלוקה ← צורה מלאה'
+    );
+  },
+
   // ============ CLASSIC MATRICES PATTERNS ============
 
   shapeFillPattern(): MatrixQuestion {
@@ -448,13 +491,14 @@ export const MatricesEngine = {
   _lineCountPattern(ascending: boolean): MatrixQuestion {
     const shapes = this.pickShapes(3);
     const counts = ascending ? [0, 1, 2] : [2, 1, 0];
-    const fillType = randChoice<FillType>(['outline', 'filled']);
+    // Always outline so internal counting lines are 100% visible and distinct
+    const fillType: FillType = 'outline';
     const grid: (ShapeConfig | null)[][] = [];
 
     for (let r = 0; r < 3; r++) {
       const row: (ShapeConfig | null)[] = [];
       for (let c = 0; c < 3; c++) {
-        row.push({ shape: shapes[r], fill: fillType, size: 'medium', lineCount: counts[c], hasBox: false });
+        row.push({ shape: shapes[r], fill: fillType, size: 'medium', lineCount: counts[c], hasBox: true });
       }
       grid.push(row);
     }
@@ -467,8 +511,9 @@ export const MatricesEngine = {
     const dist: ShapeConfig[] = [
       { ...answer, lineCount: otherC[0] },
       { ...answer, lineCount: otherC[1] },
-      { ...answer, shape: otherS[0] },
+      { ...answer, shape: otherS[0], lineCount: answer.lineCount },
       { ...answer, shape: otherS[1], lineCount: otherC[0] },
+      { ...answer, fill: 'filled', lineCount: 0 },
     ];
 
     return this.buildResult(
@@ -484,13 +529,13 @@ export const MatricesEngine = {
   transformationPattern(): MatrixQuestion {
     const shapes = this.pickShapes(3);
     const styles = ['solid', 'dashed', 'dotted'] as const;
-    const fillType = randChoice<FillType>(['outline', 'filled']);
+    const fillType: FillType = 'outline';
     const grid: (ShapeConfig | null)[][] = [];
 
     for (let r = 0; r < 3; r++) {
       const row: (ShapeConfig | null)[] = [];
       for (let c = 0; c < 3; c++) {
-        row.push({ shape: shapes[r], fill: fillType, size: 'medium', lineStyle: styles[c], hasBox: false });
+        row.push({ shape: shapes[r], fill: fillType, size: 'medium', lineStyle: styles[c], hasBox: true });
       }
       grid.push(row);
     }
@@ -524,7 +569,7 @@ export const MatricesEngine = {
     for (let r = 0; r < 3; r++) {
       const row: (ShapeConfig | null)[] = [];
       for (let c = 0; c < 3; c++) {
-        row.push({ shape: shapes[r], fill: fillType, size: 'medium', color: colors[c], hasBox: false });
+        row.push({ shape: shapes[r], fill: fillType, size: 'medium', color: colors[c], hasBox: true });
       }
       grid.push(row);
     }
@@ -546,7 +591,8 @@ export const MatricesEngine = {
 
   arithmeticPattern(): MatrixQuestion {
     const shapes = this.pickShapes(3);
-    const fillType = randChoice<FillType>(['outline', 'filled']);
+    // Always outline so counting dots are clearly visible
+    const fillType: FillType = 'outline';
     const pairs = [
       [1, 1], [1, 2], [2, 1], [1, 3], [2, 2], [3, 1],
       [1, 4], [2, 3], [3, 2], [4, 1], [2, 4], [3, 3],
@@ -558,15 +604,15 @@ export const MatricesEngine = {
       const [a, b] = chosenPairs[r];
       const sum = a + b;
       const row: (ShapeConfig | null)[] = [
-        { shape: shapes[r], fill: fillType, size: 'medium', dotCount: a, hasBox: false },
-        { shape: shapes[r], fill: fillType, size: 'medium', dotCount: b, hasBox: false },
-        r === 2 ? null : { shape: shapes[r], fill: fillType, size: 'medium', dotCount: sum, hasBox: false },
+        { shape: shapes[r], fill: fillType, size: 'medium', dotCount: a, hasBox: true },
+        { shape: shapes[r], fill: fillType, size: 'medium', dotCount: b, hasBox: true },
+        r === 2 ? null : { shape: shapes[r], fill: fillType, size: 'medium', dotCount: sum, hasBox: true },
       ];
       grid.push(row);
     }
 
     const [a, b] = chosenPairs[2];
-    const answer: ShapeConfig = { shape: shapes[2], fill: fillType, size: 'medium', dotCount: a + b, hasBox: false };
+    const answer: ShapeConfig = { shape: shapes[2], fill: fillType, size: 'medium', dotCount: a + b, hasBox: true };
     const otherS = ALL_SHAPES.filter((s) => s !== answer.shape);
     const diffDots = [1, 2, 3, 4, 5, 6].filter((d) => d !== answer.dotCount);
 
@@ -688,6 +734,7 @@ export const MatricesEngine = {
 
   generate(difficulty: DifficultyTier = 'easy'): MatrixQuestion {
     const easy = [
+      this.contourDivisionSolidPattern,
       this.analogyFillPattern,
       this.concentricProgressionPattern,
       this.columnInvariancePattern,
@@ -698,6 +745,7 @@ export const MatricesEngine = {
 
     const medium = [
       ...easy,
+      this.contourDivisionSolidPattern,
       this.dualAttributeMatrixPattern,
       this.rotationPattern,
       this.additionPattern,
@@ -709,6 +757,7 @@ export const MatricesEngine = {
 
     const hard = [
       ...medium,
+      this.contourDivisionSolidPattern,
       this.dualAttributeMatrixPattern,
       this.unionPattern,
       this.subtractionPattern,

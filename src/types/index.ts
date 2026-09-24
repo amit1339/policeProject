@@ -14,7 +14,8 @@ export type FillType =
   | 'decorated'
   | 'filled'
   | 'crosshatch'
-  | 'hatch';
+  | 'hatch'
+  | 'double';
 
 export type Size = 'small' | 'medium' | 'large' | 'xlarge';
 export type LineStyle = 'solid' | 'dashed' | 'dotted';
@@ -25,6 +26,7 @@ export interface ShapeConfig {
   size?: Size;
   color?: string;
   hasBox?: boolean;
+  doubleContour?: boolean;
   rotation?: number;
   lineCount?: number;
   dotCount?: number;
