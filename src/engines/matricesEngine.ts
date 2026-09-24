@@ -53,21 +53,42 @@ export const MatricesEngine = {
   configKey(o: ShapeConfig | null | undefined): string {
     if (!o) return 'null';
     if (o.type === 'compound' && o.elements) {
-      return 'C:' + [...o.elements].sort().join(',');
+      return 'C:' + [...new Set(o.elements)].sort().join(',');
     }
+
+    const shape = o.shape || '';
+    // VISUAL NORMALIZATION:
+    // 1. For x_cross: SVG renderer draws only 2 stroke lines. 'fill' has zero visual effect.
+    // 2. For concentric: SVG renderer draws concentric circles. 'fill' has zero visual effect.
+    let fill: string = o.fill || 'outline';
+    if (shape === 'x_cross' || shape === 'concentric') {
+      fill = 'none';
+    }
+
+    const size = o.size || 'medium';
+    const rotation = o.rotation || 0;
+    const lineCount = o.lineCount || 0;
+    const dotCount = o.dotCount || 0;
+    const color = o.color || '';
+    const lineStyle = o.lineStyle || 'solid';
+    const ringCount = o.ringCount || 0;
+    const outerThick = o.outerThick ? 'OT' : 'OF';
+    const marker = o.marker ? 'M' : '';
+    const doubleContour = o.doubleContour || o.fill === 'double' ? 'D' : '';
+
     return [
-      o.shape || '',
-      o.fill || '',
-      o.size || 'medium',
-      o.hasBox ? 'B' : '',
-      o.rotation || 0,
-      o.lineCount || 0,
-      o.dotCount || 0,
-      o.color || '',
-      o.lineStyle || 'solid',
-      o.ringCount || 0,
-      o.outerThick ? 'OT' : 'OF',
-      o.marker ? 'M' : '',
+      shape,
+      fill,
+      size,
+      doubleContour,
+      rotation,
+      lineCount,
+      dotCount,
+      color,
+      lineStyle,
+      ringCount,
+      outerThick,
+      marker,
     ].join('|');
   },
 
@@ -87,25 +108,27 @@ export const MatricesEngine = {
       const k = this.configKey(d);
       if (!seen.has(k)) {
         seen.add(k);
-        unique.push(d);
+        unique.push({ ...d, hasBox: answer.hasBox });
       }
     }
 
     let fbAttempts = 0;
-    while (unique.length < 4 && fbAttempts < 40) {
+    const pool = ALL_SHAPES.filter((s) => s !== 'x_cross');
+    while (unique.length < 4 && fbAttempts < 60) {
       fbAttempts++;
       const fb: ShapeConfig = { ...answer };
       if (fb.type === 'compound') {
-        const pool = shuffle([...COMPOUND_KEYS]);
-        fb.elements = pool.slice(0, randInt(1, 4));
+        const cPool = shuffle([...COMPOUND_KEYS]);
+        fb.elements = cPool.slice(0, randInt(1, 4));
       } else if (fb.shape === 'concentric') {
-        fb.ringCount = randChoice([1, 2, 4]);
+        fb.ringCount = randChoice([1, 2, 4, 5]);
       } else {
-        fb.shape = randChoice(ALL_SHAPES);
+        fb.shape = randChoice(pool);
         fb.fill = randChoice(ALL_FILLS);
         if (fb.dotCount !== undefined) fb.dotCount = randInt(1, 6);
         if (fb.rotation !== undefined) fb.rotation = randChoice([0, 90, 180, 270]);
       }
+      fb.hasBox = answer.hasBox;
       const k = this.configKey(fb);
       if (!seen.has(k)) {
         seen.add(k);
@@ -233,13 +256,13 @@ export const MatricesEngine = {
     }
 
     const answer: ShapeConfig = { shape: colShapes[2], fill: fills[2], size: 'medium' };
-    const unused = ALL_SHAPES.filter((s) => !colShapes.includes(s));
+    const unused = shuffle(ALL_SHAPES.filter((s) => !colShapes.includes(s) && s !== 'x_cross'));
     const dist: ShapeConfig[] = [
       { shape: colShapes[1], fill: fills[1], size: 'medium' }, // Shape from middle column
       { shape: colShapes[0], fill: fills[0], size: 'medium' }, // Shape from first column
-      { shape: randChoice(unused), fill: 'outline', size: 'medium' }, // Neutral shape
-      { shape: colShapes[2], fill: 'filled', size: 'medium' }, // Wrong fill of target shape
-      { shape: randChoice(unused), fill: 'filled', size: 'medium' },
+      { shape: unused[0], fill: 'outline', size: 'medium' },   // Neutral shape 1
+      { shape: 'cross', fill: 'outline', size: 'medium' },     // Plus cross '+' distractor vs diagonal 'X'
+      { shape: unused[1], fill: 'filled', size: 'medium' },    // Neutral shape 2
     ];
 
     return this.buildResult(
