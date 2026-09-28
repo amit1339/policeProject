@@ -80,10 +80,13 @@ export interface MatrixQuestion {
 
 export interface SeriesQuestion {
   visible: number[];
+  items?: (number | null)[];
+  missingIndex?: number;
   answer: number;
   options: number[];
   correctIndex: number;
   explanation: string;
+  patternType?: 'interleaved_middle' | 'compound_variable_ops' | 'standard';
 }
 
 export type DifficultyTier = 'easy' | 'medium' | 'hard';

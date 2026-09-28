@@ -34,6 +34,7 @@ export const App: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [matrixData, setMatrixData] = useState<MatrixQuestion | null>(null);
   const [seriesData, setSeriesData] = useState<SeriesQuestion | null>(null);
+  const [advancedPoliceSeriesOnly, setAdvancedPoliceSeriesOnly] = useState<boolean>(false);
 
   const isPolice = theme === 'police';
 
@@ -43,23 +44,41 @@ export const App: React.FC = () => {
     return 'hard';
   };
 
-  const startQuiz = (type: QuizType) => {
+  const startQuiz = (type: QuizType, forceAdvancedSeries?: boolean) => {
     setQuizType(type);
     setScore(0);
     setTotal(0);
     setAnswered(false);
     setSelectedIndex(null);
 
+    const isAdv =
+      forceAdvancedSeries !== undefined
+        ? forceAdvancedSeries
+        : advancedPoliceSeriesOnly;
+    if (forceAdvancedSeries !== undefined) {
+      setAdvancedPoliceSeriesOnly(forceAdvancedSeries);
+    }
+
     const tier = getDifficultyTier(0);
     if (type === 'matrices') {
       setMatrixData(MatricesEngine.generate(tier));
       setSeriesData(null);
     } else {
-      setSeriesData(SeriesEngine.generate(tier));
+      setSeriesData(SeriesEngine.generate(tier, isAdv));
       setMatrixData(null);
     }
 
     setCurrentScreen('quiz');
+  };
+
+  const toggleAdvancedPoliceSeries = () => {
+    const nextVal = !advancedPoliceSeriesOnly;
+    setAdvancedPoliceSeriesOnly(nextVal);
+    if (currentScreen === 'quiz' && quizType === 'series' && !answered) {
+      const tier = getDifficultyTier(total);
+      setSeriesData(SeriesEngine.generate(tier, nextVal));
+      setSelectedIndex(null);
+    }
   };
 
   const goHome = () => {
@@ -77,7 +96,7 @@ export const App: React.FC = () => {
     if (quizType === 'matrices') {
       setMatrixData(MatricesEngine.generate(tier));
     } else if (quizType === 'series') {
-      setSeriesData(SeriesEngine.generate(tier));
+      setSeriesData(SeriesEngine.generate(tier, advancedPoliceSeriesOnly));
     }
   };
 
@@ -372,6 +391,44 @@ export const App: React.FC = () => {
                   >
                     סדרות חשבוניות, הפרשים עולים, פעולות משולבות וסדרות שזורות.
                   </p>
+
+                  {/* ADVANCED POLICE SERIES TOGGLE */}
+                  <div
+                    className={`mt-4 pt-3.5 border-t flex items-center justify-between w-full transition-colors ${
+                      isPolice ? 'border-slate-100' : 'border-slate-800'
+                    }`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex flex-col text-right">
+                      <span className="text-xs font-bold text-[#102a45] dark:text-slate-200">
+                        🎯 שאלות משטרה מתקדמות בלבד
+                      </span>
+                      <span className={`text-[11px] ${isPolice ? 'text-slate-500' : 'text-slate-400'}`}>
+                        נעלם באמצע / שתי פעולות משתנות
+                      </span>
+                    </div>
+                    <button
+                      id="home-series-advanced-toggle"
+                      type="button"
+                      onClick={() => setAdvancedPoliceSeriesOnly(!advancedPoliceSeriesOnly)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        advancedPoliceSeriesOnly
+                          ? isPolice
+                            ? 'bg-blue-600'
+                            : 'bg-cyan-500'
+                          : isPolice
+                          ? 'bg-slate-300'
+                          : 'bg-slate-700'
+                      }`}
+                      aria-label="Toggle Advanced Police Series"
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          advancedPoliceSeriesOnly ? 'translate-x-0' : '-translate-x-5'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </motion.button>
               </div>
 
@@ -403,6 +460,52 @@ export const App: React.FC = () => {
               exit={{ opacity: 0, scale: 0.98 }}
               className="flex flex-col items-center gap-6 py-2"
             >
+              {/* ADVANCED SERIES MODE CONTROLS IN QUIZ */}
+              {quizType === 'series' && (
+                <div className="w-full max-w-2xl flex flex-wrap items-center justify-between gap-2 px-1">
+                  <button
+                    id="quiz-advanced-series-toggle"
+                    type="button"
+                    onClick={toggleAdvancedPoliceSeries}
+                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                      advancedPoliceSeriesOnly
+                        ? isPolice
+                          ? 'bg-blue-700 text-white shadow-blue-700/20 ring-2 ring-blue-500/30'
+                          : 'bg-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] ring-2 ring-cyan-400/40'
+                        : isPolice
+                        ? 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300'
+                        : 'bg-slate-900/80 border border-slate-700 text-slate-400 hover:border-slate-500'
+                    }`}
+                  >
+                    <span>🎯 סדרות משטרה מתקדמות:</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                        advancedPoliceSeriesOnly
+                          ? 'bg-white/20 text-white'
+                          : isPolice
+                          ? 'bg-slate-100 text-slate-500'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {advancedPoliceSeriesOnly
+                        ? 'פעיל (נעלם באמצע / פעולות משולבות) ✓'
+                        : 'כבוי (לחץ להפעלה)'}
+                    </span>
+                  </button>
+
+                  {seriesData?.patternType === 'interleaved_middle' && (
+                    <span className="text-[11px] font-bold text-blue-700 dark:text-cyan-400 bg-blue-50 dark:bg-cyan-950/60 px-2.5 py-1 rounded-full border border-blue-200 dark:border-cyan-800 shadow-sm">
+                      סדרה כפולה (נעלם באמצע)
+                    </span>
+                  )}
+                  {seriesData?.patternType === 'compound_variable_ops' && (
+                    <span className="text-[11px] font-bold text-indigo-700 dark:text-purple-400 bg-indigo-50 dark:bg-purple-950/60 px-2.5 py-1 rounded-full border border-indigo-200 dark:border-purple-800 shadow-sm">
+                      שתי פעולות משתנות ביחד
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* QUESTION CARD */}
               <div
                 className={`w-full max-w-2xl rounded-3xl p-5 sm:p-7 flex flex-col items-center transition-all ${
@@ -426,6 +529,8 @@ export const App: React.FC = () => {
                 {quizType === 'series' && seriesData && (
                   <SeriesDisplay
                     visible={seriesData.visible}
+                    items={seriesData.items}
+                    missingIndex={seriesData.missingIndex}
                     answered={answered}
                     answer={seriesData.answer}
                     theme={theme}

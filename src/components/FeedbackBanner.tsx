@@ -84,7 +84,7 @@ export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className={`text-xs sm:text-sm leading-relaxed p-3.5 rounded-xl border ${
+            className={`text-xs sm:text-sm leading-relaxed p-3.5 rounded-xl border whitespace-pre-line ${
               isPolice
                 ? 'text-slate-800 bg-white/90 border-slate-200 shadow-sm'
                 : 'text-slate-300/90 bg-black/20 border-white/5'
